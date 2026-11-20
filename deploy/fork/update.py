@@ -111,17 +111,15 @@ def apply_release(directory, manifest):
               "previousImage": json.loads(run("docker", "inspect", container))[0]["Image"]}
     atomic_json(directory / ".fork-update-before.json", before)
     # Kein automatisches Zurücksetzen nur des Images: Migrationen könnten die Datenbank schon verändert haben.
-    # Bei einem Fehler bleibt die Sicherung erhalten, und weitere automatische Versuche werden gesperrt.
-    try:
-        atomic_json(override, {"services": {"app": {"image": manifest["image"]}}})
-        compose(directory, "config", "-q")
-        compose(directory, "up", "-d", "--no-deps", "--wait", "--wait-timeout", "240", "app")
-        if not app_healthy(compose(directory, "ps", "-q", "app")):
-            raise ValueError("Die App ist nach dem Update nicht gesund")
-    except Exception:
-        atomic_json(failed, before)
-        raise
+    # Vor der Aktivierung sperren: Auch ein Prozessabbruch muss weitere automatische Versuche verhindern.
+    atomic_json(failed, before)
+    atomic_json(override, {"services": {"app": {"image": manifest["image"]}}})
+    compose(directory, "config", "-q")
+    compose(directory, "up", "-d", "--no-deps", "--wait", "--wait-timeout", "240", "app")
+    if not app_healthy(compose(directory, "ps", "-q", "app")):
+        raise ValueError("Die App ist nach dem Update nicht gesund")
     atomic_json(state_file, manifest)
+    failed.unlink()
     print(f"Fork-Release {manifest['tag']} ist gesund installiert ({manifest['commit'][:12]}).", flush=True)
 
 
