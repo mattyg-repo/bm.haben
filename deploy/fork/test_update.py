@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -120,6 +122,29 @@ class Deployment(unittest.TestCase):
         with self.assertRaises(ValueError):
             update.apply_release(self.directory, manifest())
         self.assertEqual(len(self.commands), count)
+
+    def test_interrupted_activation_blocks_the_next_automatic_attempt(self):
+        script = """
+import json, os, sys
+from pathlib import Path
+from unittest.mock import patch
+import update
+
+def compose(directory, *args):
+    if args[0] == "up":
+        os._exit(143)
+    return "f" if "psql" in args else "app-container"
+
+with patch.object(update, "compose", side_effect=compose), patch.object(update, "app_healthy", return_value=True), patch.object(update, "check_image"), patch.object(update, "run", return_value='[{"Image":"sha256:previous"}]'):
+    update.apply_release(Path(sys.argv[1]), json.loads(sys.argv[2]))
+"""
+        interrupted = subprocess.run([sys.executable, "-c", script, str(self.directory), json.dumps(manifest())], cwd=Path(update.__file__).parent)
+        self.assertEqual(interrupted.returncode, 143)
+        self.assertTrue((self.directory / ".fork-update-before.json").exists())
+        self.assertTrue((self.directory / ".fork-update-failed.json").exists())
+        with self.assertRaises(ValueError):
+            update.apply_release(self.directory, manifest())
+        self.assertEqual(self.commands, [])
 
     def test_unchanged_release_does_not_restart(self):
         update.atomic_json(self.directory / ".fork-release.json", manifest())
