@@ -22,8 +22,17 @@ class Configuration(unittest.TestCase):
         self.original = "# Eigene Werte bleiben erhalten\nAUTH_SECRET='test-$secret'\nENCRYPTION_KEY=test-key\n"
         (self.directory / ".env").write_text(self.original)
 
-    def configure(self):
-        with patch.object(configure.subprocess, "check_output", side_effect=["app-container\n", json.dumps([{"Image": "sha256:previous"}])]):
+    def configure(self, compose_environment=""):
+        check_output = subprocess.check_output
+        def output(command, **kwargs):
+            if command[-3:] == ["ps", "-q", "app"]:
+                return "app-container\n"
+            if command[:2] == ["docker", "inspect"]:
+                return json.dumps([{"Image": "sha256:previous"}])
+            if compose_environment is not None and command[-2:] == ["config", "--environment"]:
+                return compose_environment
+            return check_output(command, **kwargs)
+        with patch.object(configure.subprocess, "check_output", side_effect=output):
             return configure.configure(self.directory)
 
     def test_preserves_keys_overrides_and_running_image_without_restart(self):
@@ -39,7 +48,7 @@ class Configuration(unittest.TestCase):
     def test_preserves_custom_compose_files_and_keeps_release_override_last(self):
         (self.directory / "extra.yml").write_text("services: {}\n")
         (self.directory / ".env").write_text(self.original + 'COMPOSE_FILE="compose.yml:extra.yml"\n')
-        self.configure()
+        self.configure("COMPOSE_FILE=compose.yml:extra.yml\n")
         self.assertIn("COMPOSE_FILE=compose.yml:extra.yml:compose.fork.yml\n", (self.directory / ".env").read_text())
 
     @unittest.skipUnless(shutil.which("docker"), "Docker Compose für den Konfigurationstest benötigt")
@@ -51,7 +60,7 @@ class Configuration(unittest.TestCase):
                 (self.directory / ".env").write_text(self.original + assignment + "\n")
                 before = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
                 self.assertEqual(before["services"]["app"]["environment"]["CUSTOM_OPTION"], "behalten")
-                self.configure()
+                self.configure(None)
                 after = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
                 self.assertEqual(after["services"]["app"].get("environment"), before["services"]["app"]["environment"])
 
@@ -62,7 +71,7 @@ class Configuration(unittest.TestCase):
         (self.directory / ".env").write_text(self.original + "export COMPOSE_FILE=compose.yml:extra.yml # Eigene Dienste\n")
         before = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
         self.assertEqual(before["services"]["app"]["environment"]["CUSTOM_OPTION"], "behalten")
-        self.configure()
+        self.configure(None)
         after = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
         self.assertEqual(after["services"]["app"].get("environment"), before["services"]["app"]["environment"])
 
@@ -71,9 +80,9 @@ class Configuration(unittest.TestCase):
         fork = self.directory / "compose.fork.yml"
         previous = fork.read_text()
         env = (self.directory / ".env").read_text()
-        with patch.object(configure.subprocess, "check_output") as docker:
+        with patch.object(configure.subprocess, "check_output", return_value="COMPOSE_FILE=compose.yml:compose.fork.yml\n") as docker:
             configure.configure(self.directory)
-        docker.assert_not_called()
+        docker.assert_called_once_with(["docker", "compose", "--project-directory", str(self.directory.resolve()), "config", "--environment"], cwd=self.directory.resolve(), text=True)
         self.assertEqual(fork.read_text(), previous)
         self.assertEqual((self.directory / ".env").read_text(), env)
 
@@ -81,7 +90,7 @@ class Configuration(unittest.TestCase):
         value = self.original + "COMPOSE_FILE=compose.yml:missing.yml\n"
         (self.directory / ".env").write_text(value)
         with self.assertRaises(ValueError):
-            self.configure()
+            self.configure("COMPOSE_FILE=compose.yml:missing.yml\n")
         self.assertEqual((self.directory / ".env").read_text(), value)
         self.assertFalse((self.directory / "compose.fork.yml").exists())
 

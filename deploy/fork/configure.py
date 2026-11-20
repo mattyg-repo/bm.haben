@@ -13,9 +13,17 @@ def configure(directory):
     directory = directory.resolve()
     env = directory / ".env"
     original = env.read_text()
-    configured = [line.partition("=")[2].strip().strip("\"'") for line in original.splitlines() if COMPOSE_FILE_ASSIGNMENT.match(line)]
+    command = ["docker", "compose", "--project-directory", str(directory)]
+    configured = None
+    if any(COMPOSE_FILE_ASSIGNMENT.match(line) for line in original.splitlines()):
+        # Compose selbst löst Dotenv-Kommentare, Anführungszeichen und Variablen auf.
+        try:
+            environment = subprocess.check_output(command + ["config", "--environment"], cwd=directory, text=True)
+        except subprocess.CalledProcessError as error:
+            raise ValueError("Die bestehende Compose-Konfiguration ist ungültig") from error
+        configured = next((line.partition("=")[2] for line in environment.splitlines() if line.startswith("COMPOSE_FILE=")), None)
     if configured:
-        files = configured[-1].split(":")
+        files = configured.split(":")
     else:
         files = ["compose.yml"]
         if (directory / "compose.override.yml").exists():
@@ -25,7 +33,6 @@ def configure(directory):
             raise ValueError("Bestehende Compose-Datei fehlt: " + name)
     fork = directory / "compose.fork.yml"
     if not fork.exists():
-        command = ["docker", "compose", "--project-directory", str(directory)]
         container = subprocess.check_output(command + ["ps", "-q", "app"], cwd=directory, text=True).strip()
         if not container:
             raise ValueError("Die vorhandene App läuft nicht")
