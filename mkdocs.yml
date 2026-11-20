@@ -48,6 +48,7 @@ nav:
       - Anbindungen: installation-anbindungen.md
       - Single Sign-on: installation-sso.md
       - Backup und Updates: installation-backup.md
+      - Eigene Fork-Releases: installation-fork.md
       - Häufige Probleme: installation-probleme.md
       - Gehostet oder mit Partner: gehostet.md
   - Einrichten:
