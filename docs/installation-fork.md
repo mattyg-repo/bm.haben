@@ -51,10 +51,28 @@ Ein laufender Umzug verschiebt das Update. Ansonsten lädt der Updater das Image
 
 Schlägt der App-Start oder die Gesundheitsprüfung fehl, blockiert `.fork-update-failed.json` weitere automatische Updates. `.fork-update-before.json` nennt das bisherige Image und die vorherige Compose-Ergänzung. Es gibt kein automatisches Zurücksetzen nur des Images: Eine Migration kann die Datenbank bereits verändert haben.
 
-Dann Timer anhalten, Logs prüfen und nach [Update zurücknehmen](installation-backup.md#update-zurücknehmen) Datenbank, Belege und passendes App-Image gemeinsam wiederherstellen. Die Fehlermarkierung erst nach erfolgreicher Wiederherstellung entfernen.
+Dann Timer anhalten und Logs prüfen:
 
 ```sh
 systemctl disable --now haben-fork-update.timer
 ```
+
+Vor dem Wiederherstellen die vorherige Fork-Konfiguration zurückschreiben. `compose.fork.yml` wird zuletzt geladen und hätte sonst Vorrang vor der Image-Angabe in `compose.override.yml` aus der allgemeinen Wiederherstellungsanleitung:
+
+```sh
+cd /root/haben
+python3 - <<'PY'
+import json
+from pathlib import Path
+before = json.loads(Path(".fork-update-before.json").read_text())
+previous = before["previousCompose"]
+if previous is None:
+    previous = json.dumps({"services": {"app": {"image": before["previousImage"]}}})
+Path("compose.fork.yml").write_text(previous + "\n")
+Path(".fork-release.json").write_text(json.dumps(before["previous"]) + "\n")
+PY
+```
+
+Danach nach [Update zurücknehmen](installation-backup.md#update-zurücknehmen) Datenbank und Belege aus der Sicherung vor dem fehlgeschlagenen Update mit diesem App-Image gemeinsam wiederherstellen. Die Fehlermarkierung erst nach erfolgreicher Wiederherstellung entfernen und den Timer wieder aktivieren.
 
 Die Update-Skripte selbst werden bei einem App-Release nicht ersetzt; Änderungen daran werden nach Prüfung erneut mit `install.sh` installiert.

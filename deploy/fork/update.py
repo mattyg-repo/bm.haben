@@ -51,20 +51,13 @@ def latest_release():
     return validate_manifest(release, manifest)
 
 
-def run(*args):
-    return subprocess.run(args, check=True, text=True, stdout=subprocess.PIPE).stdout.strip()
+def run(*args, cwd=None):
+    return subprocess.run(args, cwd=cwd, check=True, text=True, stdout=subprocess.PIPE).stdout.strip()
 
 
 def compose(directory, *args):
-    files = ["compose.yml"]
-    if (directory / "compose.override.yml").exists():
-        files.append("compose.override.yml")
-    if (directory / "compose.fork.yml").exists():
-        files.append("compose.fork.yml")
-    command = ["docker", "compose", "--project-directory", str(directory)]
-    for name in files:
-        command.extend(["-f", str(directory / name)])
-    return run(*command, *args)
+    # Derselbe COMPOSE_FILE-Eintrag in .env gilt für den Timer und manuelle docker-compose-Aufrufe.
+    return run("docker", "compose", "--project-directory", str(directory), *args, cwd=directory)
 
 
 def atomic_json(path, value):
