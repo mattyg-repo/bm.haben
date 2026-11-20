@@ -1,0 +1,11 @@
+[Unit]
+Description=Nachts auf freigegebene bm.haben-Releases prüfen
+
+[Timer]
+OnCalendar=*-*-* 04:30:00 Europe/Berlin
+RandomizedDelaySec=10min
+Persistent=true
+Unit=haben-fork-update.service
+
+[Install]
+WantedBy=timers.target

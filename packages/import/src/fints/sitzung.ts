@@ -1,6 +1,7 @@
 import { type BankAccount, type BankAnswer, type BankingInformation, type ClientResponse, FinTSClient, FinTSConfig, type Statement } from "lib-fints";
 import { bankdatenNichtLoggen } from "./log.ts";
 import { lesefehler, lesefehlerMerken, type UmsatzFormat, umsatzFormat } from "./lesefehler.ts";
+import { gespeichertesSparkassenMediumErgaenzen, synchronisierenMitSparkassenMedium } from "./sparkasse-medium.ts";
 
 /**
  * Dünne Schicht über lib-fints (FinTS 3.0 mit PIN/TAN): baut den Client, übersetzt Antworten der Bank in
@@ -70,10 +71,14 @@ export function fintsClient(produkt: FintsProdukt, zugang: FintsZugang, gespeich
         zugang.benutzer,
         zugang.pin,
         gespeichert.tanVerfahren ?? undefined,
-        gespeichert.tanMedium ?? undefined,
+        undefined,
         kundenId,
       )
     : FinTSConfig.forFirstTimeUse(produkt.id, produkt.version, zugang.url, zugang.blz, zugang.benutzer, zugang.pin, kundenId);
+  if (gespeichert?.tanMedium) {
+    gespeichertesSparkassenMediumErgaenzen(config, gespeichert.tanMedium);
+    config.selectTanMedia(gespeichert.tanMedium);
+  }
   config.debugEnabled = false;
   bankdatenNichtLoggen();
   const client = new FinTSClient(config);
@@ -139,7 +144,7 @@ function antwort<T>(client: FinTSClient, response: ClientResponse, wert: () => T
  * liefert die erlaubten Verfahren, erst die zweite mit gewähltem Verfahren die Konten.
  */
 export async function fintsSynchronisieren(client: FinTSClient, weiter?: FintsWeiter): Promise<FintsAntwort<BankingInformation>> {
-  const response = weiter ? await client.synchronizeWithTan(weiter.referenz, weiter.tan) : await client.synchronize();
+  const response = weiter ? await client.synchronizeWithTan(weiter.referenz, weiter.tan) : await synchronisierenMitSparkassenMedium(client);
   return antwort(client, response, () => client.config.bankingInformation);
 }
 
