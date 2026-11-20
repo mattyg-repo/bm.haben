@@ -1,15 +1,19 @@
 """Bestehende Compose-Dateien und Schlüssel behalten; nur den eigenen Release-Override ergänzen."""
 import json
 from pathlib import Path
+import re
 import subprocess
 import sys
+
+
+COMPOSE_FILE_ASSIGNMENT = re.compile(r"^\s*(?:export\s+)?COMPOSE_FILE\s*=")
 
 
 def configure(directory):
     directory = directory.resolve()
     env = directory / ".env"
     original = env.read_text()
-    configured = [line.partition("=")[2].strip().strip("\"'") for line in original.splitlines() if line.startswith("COMPOSE_FILE=")]
+    configured = [line.partition("=")[2].strip().strip("\"'") for line in original.splitlines() if COMPOSE_FILE_ASSIGNMENT.match(line)]
     if configured:
         files = configured[-1].split(":")
     else:
@@ -29,7 +33,7 @@ def configure(directory):
         fork.write_text(json.dumps({"services": {"app": {"image": metadata["Image"]}}}, indent=2) + "\n")
         fork.chmod(0o600)
     files = [name for name in files if name != "compose.fork.yml"] + ["compose.fork.yml"]
-    lines = [line for line in original.splitlines() if not line.startswith("COMPOSE_FILE=")]
+    lines = [line for line in original.splitlines() if not COMPOSE_FILE_ASSIGNMENT.match(line)]
     lines.append("COMPOSE_FILE=" + ":".join(files))
     temporary = env.with_name(".env.fork-new")
     temporary.write_text("\n".join(lines) + "\n")
