@@ -55,6 +55,17 @@ class Configuration(unittest.TestCase):
                 after = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
                 self.assertEqual(after["services"]["app"].get("environment"), before["services"]["app"]["environment"])
 
+    @unittest.skipUnless(shutil.which("docker"), "Docker Compose für den Konfigurationstest benötigt")
+    def test_preserves_valid_dotenv_assignment_with_inline_comment(self):
+        (self.directory / "extra.yml").write_text("services:\n  app:\n    environment:\n      CUSTOM_OPTION: behalten\n")
+        command = ["docker", "compose", "--project-directory", str(self.directory), "config", "--format", "json"]
+        (self.directory / ".env").write_text(self.original + "export COMPOSE_FILE=compose.yml:extra.yml # Eigene Dienste\n")
+        before = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
+        self.assertEqual(before["services"]["app"]["environment"]["CUSTOM_OPTION"], "behalten")
+        self.configure()
+        after = json.loads(subprocess.check_output(command, cwd=self.directory, text=True))
+        self.assertEqual(after["services"]["app"].get("environment"), before["services"]["app"]["environment"])
+
     def test_reinstallation_does_not_replace_the_selected_release(self):
         self.configure()
         fork = self.directory / "compose.fork.yml"
