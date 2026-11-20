@@ -31,7 +31,7 @@ sh deploy/fork/install.sh /root/haben
 
 Das richtet `/usr/local/sbin/haben-fork-update` und einen systemd-Timer ein. Es ergänzt `compose.fork.yml` und den Eintrag `COMPOSE_FILE` in `.env`; eigene Caddy-Einstellungen, Schlüssel und Datenvolumes bleiben erhalten. Zunächst bleibt das laufende Image ausgewählt. Der Installer startet die App nicht neu.
 
-Der Timer prüft täglich zwischen **04:30 und 04:40 Uhr, Europe/Berlin**. Ein verpasster Termin wird beim nächsten Serverstart nachgeholt. Nur das neueste stabile `bm-v…`-Release mit fertigem Manifest wird übernommen, keine Entwicklungsstände oder älteren Versionen.
+Der Timer prüft täglich **gegen 04:30 Uhr, Europe/Berlin**, mit bis zu zehn Minuten Zufallsverzögerung. Ein verpasster Termin wird beim nächsten Serverstart nachgeholt. Nur das neueste stabile `bm-v…`-Release mit fertigem Manifest wird übernommen, keine Entwicklungsstände oder älteren Versionen.
 
 ```sh
 # Nur das verfügbare Release ansehen
