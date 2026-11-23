@@ -33,6 +33,7 @@ import { InvoiceAttachments } from "../../components/InvoiceAttachments.tsx";
 import { getQuoteDefaultAttachments } from "../../server/functions/invoice-attachments.ts";
 import { MailCard } from "../../components/MailCard.tsx";
 import { EigeneSeitenCard } from "../../components/EigeneSeitenCard.tsx";
+import { GbrPartnersCard } from "../../components/GbrPartnersCard.tsx";
 import { OwnAccountsCard } from "../../components/OwnAccountsCard.tsx";
 import { McpCard } from "../../components/McpCard.tsx";
 import { ExtractionCard } from "../../components/ExtractionCard.tsx";
@@ -297,7 +298,12 @@ function SettingsPage() {
               <ExtractionCard settings={extraction} />
             </>
           )}
-          {bereich === "konten" && <OwnAccountsCard overview={ownAccounts} />}
+          {bereich === "konten" && (
+            <>
+              {company.rechtsform === "gbr" && <GbrPartnersCard />}
+              <OwnAccountsCard overview={ownAccounts} />
+            </>
+          )}
           {bereich === "seiten" && <EigeneSeitenCard pages={customPages} />}
           {bereich === "waehrung" && <ExchangeRatesCard data={rates} />}
           {bereich === "export" && (

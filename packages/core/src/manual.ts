@@ -179,7 +179,11 @@ export function manualPostingIssues(
     if (!/^\d{4}$/.test(line.account)) issues.push(`${row}: Konto hat vier Ziffern`);
     else if (opening.has(line.account)) {
       // In der Eröffnung erlaubt, siehe openingAccounts
-    } else if (kind === "eroeffnung" && !carriesForward(kontenrahmen, line.account)) {
+    } else if (
+      kind === "eroeffnung" &&
+      !carriesForward(kontenrahmen, line.account) &&
+      !(rechtsform === "gbr" && isPrivateAccount(kontenrahmen, line.account))
+    ) {
       issues.push(`${row}: Konto ${line.account} ist ein Erfolgskonto; die Eröffnung übernimmt nur Bestände`);
     } else if (line.account.startsWith("9")) issues.push(`${row}: Konto ${line.account} ist ein Vortrags- oder statistisches Konto`);
     else if (line.taxCode && freieBuchungKonten(kontenrahmen, line.taxCode).includes(line.account)) {

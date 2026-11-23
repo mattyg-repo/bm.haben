@@ -91,36 +91,74 @@ async function assertLohnOffen(tx: Tx, kind: LohnZahlung, amount: Cents, kontenr
 }
 
 export const allocationSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("invoice"), transactionId: z.uuid(), invoiceId: z.uuid(), amount: inCents(z.number().int()) }),
-  z.object({ kind: z.literal("document"), transactionId: z.uuid(), documentId: z.uuid(), amount: inCents(z.number().int()) }),
-  // Zahllast oder Erstattung einer abgegebenen Voranmeldung: gebucht wie „Umsatzsteuer an das Finanzamt“, mit Bezug
-  z.object({ kind: z.literal("ustva"), transactionId: z.uuid(), vatReturnId: z.uuid(), amount: inCents(z.number().int()) }),
   z.object({
-    kind: z.enum(DIRECT_KINDS),
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("invoice"),
     transactionId: z.uuid(),
+    invoiceId: z.uuid(),
     amount: inCents(z.number().int()),
   }),
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("document"),
+    transactionId: z.uuid(),
+    documentId: z.uuid(),
+    amount: inCents(z.number().int()),
+  }),
+  // Zahllast oder Erstattung einer abgegebenen Voranmeldung: gebucht wie „Umsatzsteuer an das Finanzamt“, mit Bezug
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("ustva"),
+    transactionId: z.uuid(),
+    vatReturnId: z.uuid(),
+    amount: inCents(z.number().int()),
+  }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.enum(DIRECT_KINDS), transactionId: z.uuid(), amount: inCents(z.number().int()) }),
   // Steuerzahlung oder Erstattung mit Steuerart, Bezugsjahr und Teil (Steuer oder Nebenleistung)
-  z.object({ kind: z.literal("steuer"), transactionId: z.uuid(), amount: inCents(z.number().int()), steuer: steuerangabeSchema }),
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("steuer"),
+    transactionId: z.uuid(),
+    amount: inCents(z.number().int()),
+    steuer: steuerangabeSchema,
+  }),
   // Auszahlung, Tilgung, Zinsen oder Gebühren eines Darlehens
-  z.object({ kind: z.literal("darlehen"), transactionId: z.uuid(), amount: inCents(z.number().int()), darlehen: loanPartSchema }),
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("darlehen"),
+    transactionId: z.uuid(),
+    amount: inCents(z.number().int()),
+    darlehen: loanPartSchema,
+  }),
   // Direkt auf eine Einnahme- oder Ausgabekategorie mit Steuersatz
-  z.object({ kind: z.literal("kategorie"), transactionId: z.uuid(), amount: inCents(z.number().int()), kategorie: kategorieAngabeSchema }),
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal("kategorie"),
+    transactionId: z.uuid(),
+    amount: inCents(z.number().int()),
+    kategorie: kategorieAngabeSchema,
+  }),
   // Aufladung eines Guthabens: Ausgabe ohne Vorsteuer, Pflicht-Kostenkategorie, ohne Steuersatz (#1356)
-  z.object({ kind: z.literal(AUFLADUNG_KIND), transactionId: z.uuid(), amount: inCents(z.number().int()), kategorie: kategorieAngabeSchema }),
+  z.object({
+    partnerId: z.uuid().nullable().optional(),
+    kind: z.literal(AUFLADUNG_KIND),
+    transactionId: z.uuid(),
+    amount: inCents(z.number().int()),
+    kategorie: kategorieAngabeSchema,
+  }),
 ]);
 
 export type AllocationInput = z.infer<typeof allocationSchema>;
 
 /** Ein Teil einer Aufteilung: Ziel und Betrag, Vorzeichen wie auf dem Konto (Gebühr in einer Auszahlung also negativ) */
 const splitPartSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("invoice"), invoiceId: z.uuid(), amount: inCents(z.number().int()) }),
-  z.object({ kind: z.literal("document"), documentId: z.uuid(), amount: inCents(z.number().int()) }),
-  z.object({ kind: z.literal("ustva"), vatReturnId: z.uuid(), amount: inCents(z.number().int()) }),
-  z.object({ kind: z.enum(DIRECT_KINDS), amount: inCents(z.number().int()) }),
-  z.object({ kind: z.literal("steuer"), amount: inCents(z.number().int()), steuer: steuerangabeSchema }),
-  z.object({ kind: z.literal("darlehen"), amount: inCents(z.number().int()), darlehen: loanPartSchema }),
-  z.object({ kind: z.literal("kategorie"), amount: inCents(z.number().int()), kategorie: kategorieAngabeSchema }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("invoice"), invoiceId: z.uuid(), amount: inCents(z.number().int()) }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("document"), documentId: z.uuid(), amount: inCents(z.number().int()) }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("ustva"), vatReturnId: z.uuid(), amount: inCents(z.number().int()) }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.enum(DIRECT_KINDS), amount: inCents(z.number().int()) }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("steuer"), amount: inCents(z.number().int()), steuer: steuerangabeSchema }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("darlehen"), amount: inCents(z.number().int()), darlehen: loanPartSchema }),
+  z.object({ partnerId: z.uuid().nullable().optional(), kind: z.literal("kategorie"), amount: inCents(z.number().int()), kategorie: kategorieAngabeSchema }),
 ]);
 
 export const splitSchema = z.object({ transactionId: z.uuid(), parts: z.array(splitPartSchema).min(2).max(20) });
@@ -202,6 +240,7 @@ export async function bookPart(tx: Tx, company: Awaited<ReturnType<typeof openBo
     description,
     sourceType: "allocation",
     sourceId: allocation!.id,
+    partnerId: "partnerId" in part ? part.partnerId : undefined,
     lines: onLedger(lines, company.kontenrahmen, bank.ledgerIndex),
   });
   // Zahlung vor der Ausführung (#693): Die vorausdatierte Freigabe zurücknehmen, den Rest wieder festschreiben —

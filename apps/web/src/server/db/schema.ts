@@ -74,6 +74,47 @@ import type { LstbWerte } from "@haben/core";
 
 export * from "./auth-schema.ts";
 
+/** GbR: feste Kontenkennung, auch nach dem Ausscheiden nicht wieder vergeben. */
+export const gbrPartners = pgTable(
+  "gbr_partners",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    number: smallint("number").notNull().unique(),
+    name: text("name").notNull(),
+    startsOn: date("starts_on").notNull(),
+    endsOn: date("ends_on"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("gbr_partners_number", sql`${t.number} between 1 and 9`),
+    check("gbr_partners_name", sql`length(trim(${t.name})) between 1 and 200`),
+    check("gbr_partners_dates", sql`${t.endsOn} is null or ${t.endsOn} >= ${t.startsOn}`),
+  ],
+);
+
+/** Zuordnung neben den versiegelten Vorgängen; ab ihrer Buchung ebenso unveränderbar. */
+export const gbrSourcePartners = pgTable(
+  "gbr_source_partners",
+  {
+    kind: text("kind", { enum: ["document", "bank", "bankkonto"] }).notNull(),
+    sourceId: uuid("source_id").notNull(),
+    partnerId: uuid("partner_id")
+      .notNull()
+      .references(() => gbrPartners.id, { onDelete: "restrict" }),
+  },
+  (t) => [primaryKey({ columns: [t.kind, t.sourceId] }), check("gbr_source_partners_kind", sql`${t.kind} in ('document', 'bank', 'bankkonto')`)],
+);
+
+/** Erstellte Übergaben, keine Bestätigung eines Imports im Fremdprogramm. Nur anhängen. */
+export const gbrTransfers = pgTable("gbr_transfers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  fingerprint: text("fingerprint").notNull(),
+  dateFrom: date("date_from").notNull(),
+  dateTo: date("date_to").notNull(),
+  entryIds: jsonb("entry_ids").$type<string[]>().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   dataType: () => "bytea",
 });
@@ -227,7 +268,7 @@ export const company = pgTable(
   },
   (t) => [
     check("company_single_row", sql`${t.id} = 1`),
-    check("company_rechtsform", sql`${t.rechtsform} in ('einzelunternehmen', 'gmbh', 'ug')`),
+    check("company_rechtsform", sql`${t.rechtsform} in ('einzelunternehmen', 'gbr', 'gmbh', 'ug')`),
     check("company_nav_color", sql`${t.navColor} ~ '^#[0-9A-F]{6}$'`),
   ],
 );

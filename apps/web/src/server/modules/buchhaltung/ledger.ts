@@ -1,8 +1,10 @@
+import { refreshGbrAccountNames } from "../stammdaten/index.ts";
 import {
   ACCOUNTS,
   carryForward,
   resolveOwnAccount,
   isKapitalgesellschaft,
+  isPrivateAccount,
   type Cents,
   type KontenblattZeile,
   type Kontenrahmen,
@@ -16,6 +18,7 @@ import { db, schema, type Tx } from "../../db/index.ts";
 import { loadOwnAccountParents, refreshOwnAccountNames } from "../eigene-konten/index.ts";
 import { accountName, verrechnungQuellen } from "./journal.ts";
 import { UserError } from "../../errors.ts";
+import { gbrPostingLinesIn } from "./gbr-posting.ts";
 
 /*
  * Hauptbuch: einzige Stelle, die ins Journal schreibt (post), dazu Saldenliste und Kontenblatt.
@@ -33,6 +36,8 @@ export async function openBooks(tx: Tx): Promise<Company> {
 }
 
 export interface Posting {
+  /** GbR: ausdrückliche Wahl bei Kasse, Bank-Aufteilungen und manuellen Buchungen. */
+  partnerId?: string | null;
   date: string;
   description: string;
   sourceType: (typeof schema.journalEntries.$inferInsert)["sourceType"];
@@ -55,6 +60,7 @@ export async function post(tx: Tx, books: Books, posting: Posting): Promise<stri
   const closedYear = Number(posting.date.slice(0, 4));
   const [closed] = await tx.select({ year: schema.yearClosings.year }).from(schema.yearClosings).where(eq(schema.yearClosings.year, closedYear));
   if (closed) throw new LedgerError(`Das Jahr ${closedYear} ist abgeschlossen; Buchungen mit Datum darin sind nicht mehr möglich.`);
+  const partnerLines = await gbrPostingLinesIn(tx, books, posting);
   const [entry] = await tx
     .insert(schema.journalEntries)
     .values({
@@ -106,7 +112,7 @@ export async function post(tx: Tx, books: Books, posting: Posting): Promise<stri
     );
   }
   // Zeilen ohne Betrag fallen weg, außer sie tragen eine Bemessungsgrundlage (Anteil ohne Steuer bei Ist, #542)
-  const lines = posting.lines.filter((line) => line.debit !== 0 || line.credit !== 0 || (line.basis ?? 0) !== 0);
+  const lines = partnerLines.filter((line) => line.debit !== 0 || line.credit !== 0 || (line.basis ?? 0) !== 0);
   if (lines.length > 0) await tx.insert(schema.journalLines).values(lines.map((line) => ({ entryId: entry!.id, ...line })));
   await tx.update(schema.journalEntries).set({ lockedAt: new Date() }).where(eq(schema.journalEntries.id, entry!.id));
   return entry!.id;
@@ -131,7 +137,7 @@ const OPENING_SOURCE = "eroeffnung" as const;
  */
 async function openingBalances(start: string): Promise<{ kontenrahmen: Kontenrahmen; balances: Map<string, Cents> }> {
   const company = await loadCompany();
-  if (!isKapitalgesellschaft(company.rechtsform)) return { kontenrahmen: company.kontenrahmen, balances: new Map() };
+  if (!isKapitalgesellschaft(company.rechtsform) && company.rechtsform !== "gbr") return { kontenrahmen: company.kontenrahmen, balances: new Map() };
   const e = schema.journalEntries;
   const l = schema.journalLines;
   const rows = await db
@@ -142,10 +148,13 @@ async function openingBalances(start: string): Promise<{ kontenrahmen: Kontenrah
     .groupBy(l.account);
   return {
     kontenrahmen: company.kontenrahmen,
-    balances: carryForward(
-      company.kontenrahmen,
-      rows.map((r) => ({ account: r.account, saldo: Number(r.saldo) })),
-    ),
+    balances:
+      company.rechtsform === "gbr"
+        ? new Map(rows.filter((r) => isPrivateAccount(company.kontenrahmen, r.account)).map((r) => [r.account, Number(r.saldo)]))
+        : carryForward(
+            company.kontenrahmen,
+            rows.map((r) => ({ account: r.account, saldo: Number(r.saldo) })),
+          ),
   };
 }
 
@@ -175,7 +184,7 @@ export async function saldenliste(range: LedgerRange, optionen: { aufgeloest?: b
 }
 
 async function saldenlisteRoh({ from, to }: LedgerRange): Promise<SaldenZeile[]> {
-  await refreshOwnAccountNames();
+  await Promise.all([refreshOwnAccountNames(), refreshGbrAccountNames()]);
   const e = schema.journalEntries;
   const l = schema.journalLines;
   const rows = await db
@@ -269,7 +278,7 @@ export interface Kontenblatt {
 
 /** Alle Buchungen auf einem Konto im Zeitraum mit Gegenkonten und laufendem Saldo */
 export async function kontenblatt(account: string, { from, to }: LedgerRange): Promise<Kontenblatt> {
-  await refreshOwnAccountNames();
+  await Promise.all([refreshOwnAccountNames(), refreshGbrAccountNames()]);
   const e = schema.journalEntries;
   const l = schema.journalLines;
   const [opening] = await db

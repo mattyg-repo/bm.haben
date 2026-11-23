@@ -1,3 +1,4 @@
+import { GbrSourceChoice } from "../../components/GbrPartnerChoice.tsx";
 import { getRouteApi } from "@tanstack/react-router";
 import { formatDecimal } from "@haben/core";
 import { BankDuplicateNotice } from "../../components/BankDuplicateNotice.tsx";
@@ -26,6 +27,7 @@ import { type Gebuehr, type Optionen, useZuordnung, type Zuordnung } from "./-ba
 const bankRoute = getRouteApi("/_app/bank");
 
 export function AllocationPanel({ detail, nextOpenId, gebuehr, ...optionen }: Optionen & { detail: Detail; nextOpenId: string | undefined; gebuehr: Gebuehr }) {
+  const gbr = bankRoute.useRouteContext().rechtsform === "gbr";
   const z = useZuordnung(detail, optionen, nextOpenId, gebuehr);
   const { tx, busy, notice, run, aufrufe } = z;
   const duplicateNotice = (
@@ -45,6 +47,7 @@ export function AllocationPanel({ detail, nextOpenId, gebuehr, ...optionen }: Op
   return (
     <aside ref={z.panel} className="card" aria-label="Zuordnung" style={{ gap: 16 }}>
       <UmsatzKopf tx={tx} />
+      {gbr && <GbrSourceChoice key={`${tx.id}:${detail.allocations.length}`} kind="bank" sourceId={tx.id} />}
       {duplicateNotice}
       <Stand z={z} />
       {tx.open !== 0 && z.wahl.mode === "split" && <Aufteilen z={z} />}

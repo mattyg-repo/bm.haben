@@ -1,4 +1,3 @@
-import { isKapitalgesellschaft } from "@haben/core";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { loadCompany } from "../modules/stammdaten/index.ts";
@@ -59,7 +58,7 @@ export const getFinanzamt = createServerFn({ method: "GET" })
       pendingConfirmations: { test: pendingTest.length, live: pendingLive.length },
       autoFetch,
       // Einkommensteuer-Vorauszahlungen hat nur ein Einzelunternehmen; eine GmbH oder UG zahlt Körperschaftsteuer
-      basis: isKapitalgesellschaft(company.rechtsform) ? null : basis,
+      basis: company.rechtsform !== "einzelunternehmen" ? null : basis,
       // Der Haken „Keine Einkommensteuer-Vorauszahlungen festgesetzt“ steuert den Hinweis im Reiter (#1287)
       keineVorauszahlungen: company.taxpayer.keineVorauszahlungen ?? false,
       messages,

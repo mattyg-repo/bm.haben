@@ -51,6 +51,7 @@ export const cashInputSchema = z.object({
   /** Cent, immer positiv; die Richtung folgt aus der Art */
   amount: inCents(z.number().int().min(1, "Betrag fehlt").max(100_000_000)),
   text: z.string().trim().max(300).default(""),
+  partnerId: z.uuid().nullable().optional(),
 });
 
 export type CashInput = z.input<typeof cashInputSchema>;
@@ -156,13 +157,17 @@ export async function reverseDocumentCashEntry(tx: Tx, input: { documentId: stri
   });
 }
 
-async function postCash(tx: Tx, input: { id: string; date: string; amount: Cents; kind: CashBooking; text: string; reversesId?: string | null }) {
+async function postCash(
+  tx: Tx,
+  input: { id: string; date: string; amount: Cents; kind: CashBooking; text: string; partnerId?: string | null; reversesId?: string | null },
+) {
   const books = await openBooks(tx);
   return post(tx, books, {
     date: input.date,
     description: input.text,
     sourceType: "kasse",
     sourceId: input.id,
+    partnerId: input.partnerId,
     reversesId: input.reversesId,
     lines: cashPosting(CASH_BOOKINGS[input.kind].kind, input.amount, books.kontenrahmen, books.rechtsform),
   });
@@ -179,7 +184,7 @@ export async function createCashEntry(actor: string, input: CashInput, today: st
     await tx.execute(lock);
     await assertNeverNegative(tx, parsed.date, amount);
     const id = crypto.randomUUID();
-    const journalEntryId = await postCash(tx, { id, date: parsed.date, amount, kind: parsed.kind, text });
+    const journalEntryId = await postCash(tx, { id, date: parsed.date, amount, kind: parsed.kind, text, partnerId: parsed.partnerId });
     const [row] = await insertCashEntry(tx, { id, number: await nextNumber(tx), date: parsed.date, amount, kind: parsed.kind, text, journalEntryId });
     return row!;
   });

@@ -14,7 +14,7 @@ export const getSaldenliste = createServerFn({ method: "GET" })
     const range = ledgerRange(data.year, data.period);
     const [rows, years, company] = await Promise.all([saldenliste(range), reportYears(), loadCompany()]);
     // GmbH und UG bilanzieren: Bestandskonten tragen ihren Saldo aus den Vorjahren vor (saldenliste)
-    return { ...range, rows, years, vortrag: isKapitalgesellschaft(company.rechtsform) };
+    return { ...range, rows, years, vortrag: isKapitalgesellschaft(company.rechtsform) || company.rechtsform === "gbr" };
   });
 
 const vonBisSchema = ledgerVonBisSchema.refine((r) => yearSchema.safeParse(Number(r.von.slice(0, 4))).success, "Jahr außerhalb des Bereichs");

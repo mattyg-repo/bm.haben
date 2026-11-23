@@ -6,6 +6,7 @@
  * (Modulgrenzen, scripts/modulgrenzen/regel.ts).
  */
 export { reverseLinesIn } from "./gegenbuchung.ts";
+export { gbrPostingLinesIn } from "./gbr-posting.ts";
 export { AbschlussError, closeYear, jahresabschluss, reportIssues as abschlussHinweise, type AbschlussHinweis } from "./abschluss.ts";
 export {
   assetInputSchema,

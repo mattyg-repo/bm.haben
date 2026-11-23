@@ -101,3 +101,4 @@ export { attachOrderPdf, listOrderDocuments, orderArchiveOverview, orderDocument
 export { contactHistory, type ContactHistoryRow, type ContactHistorySection } from "./kontakt-historie.ts";
 export { confirmWithoutFile, revokeFileConfirmation, FileStateError } from "./dateistand.ts";
 export { previewWisoAssets } from "./wiso-assets.ts";
+export { gbrTransfer } from "./gbr-transfer.ts";

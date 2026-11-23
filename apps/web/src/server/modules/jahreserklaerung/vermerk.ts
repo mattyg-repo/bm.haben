@@ -148,6 +148,8 @@ export async function vermerkeJahresabgabe(actor: string, form: VermerkForm, yea
     throw new AnnualError(`Der Tag der Abgabe liegt vor dem Ende des Jahres ${year}; so früh kann die Erklärung nicht abgegeben worden sein.`);
   // Kapitalgesellschaften bilanzieren (§ 6, § 238 HGB); eine EÜR nach § 4 Abs. 3 EStG gibt es für sie nicht
   // Einkommensteuer zahlt sie auch nicht, sondern Körperschaftsteuer (§ 1 KStG); wie checkAnnual beim Senden
+  if (form !== "ust" && (await loadCompany()).rechtsform === "gbr")
+    throw new AnnualError("Die Jahreserklärungen der GbR außer Umsatzsteuer werden in dieser Ausbaustufe außerhalb von Haben geführt.");
   if (form !== "ust" && isKapitalgesellschaft((await loadCompany()).rechtsform))
     throw new AnnualError(
       `Eine Kapitalgesellschaft gibt keine ${form === "euer" ? "Anlage EÜR" : "Einkommensteuererklärung"} ab; vermerken lässt sich nur die Umsatzsteuererklärung.`,

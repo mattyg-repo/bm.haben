@@ -1,3 +1,4 @@
+import { GbrPartnerChoice } from "../../components/GbrPartnerChoice.tsx";
 import {
   amountError,
   bareinnahmeText,
@@ -116,6 +117,7 @@ function CashForm({ data, onNotice }: { data: Data; onNotice: (n: Notice) => voi
   const { rechnung } = Route.useSearch();
   const [kind, setKind] = useState<Mode>(rechnung ? "rechnung" : "einlage");
   const [busy, setBusy] = useState(false);
+  const [partnerId, setPartnerId] = useState("");
   const defaultDate = `${data.year}-12-31` < data.today ? `${data.year}-12-31` : data.today;
   const [date, setDate] = useState(defaultDate);
   // Stand am Ende des Monats der Bareinnahme, wie ihn der Server prüft; nach dem Ende von § 19 gilt er für Monate davor weiter
@@ -131,7 +133,7 @@ function CashForm({ data, onNotice }: { data: Data; onNotice: (n: Notice) => voi
       return `Nr. ${result.number} gebucht: Bareinnahme über ${formatEuro(amount)}, ${bareinnahmeText(steuer)}.`;
     }
     if (kind !== "rechnung") {
-      const result = await create({ data: { kind, date, amount, text } });
+      const result = await create({ data: { kind, date, amount, text, partnerId: partnerId || null } });
       return `Nr. ${result.number} gebucht: ${cashBookingLabel(kind, data.rechtsform)} über ${formatEuro(amount)}.`;
     }
     const invoiceId = String(values.get("invoiceId") ?? "");
@@ -193,6 +195,9 @@ function CashForm({ data, onNotice }: { data: Data; onNotice: (n: Notice) => voi
           Bareinnahme ohne Rechnung
         </button>
       </div>
+      {data.rechtsform === "gbr" && (kind === "einlage" || kind === "entnahme") && (
+        <GbrPartnerChoice value={partnerId} onChange={setPartnerId} disabled={busy} />
+      )}
       <div className="form-grid">
         <Field label="Datum">
           {(control) => <input {...control} type="date" name="date" value={date} onChange={(e) => setDate(e.target.value)} max={data.today} required />}

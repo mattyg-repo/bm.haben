@@ -9,6 +9,7 @@ import { BEREICHE, type BereichId } from "./bereiche.ts";
 export const SELBSTAENDIG = {
   freiberufler: "Freiberuflich",
   gewerbe: "Mit Gewerbe",
+  gbr: "GbR (EÜR)",
   gmbh: "GmbH",
   ug: "UG (haftungsbeschränkt)",
 } as const;
@@ -99,7 +100,7 @@ export function steuerangabenNach(aktuell: Steuerangaben, antworten: Antworten):
   const art = antworten.selbstaendig;
   const kleinunternehmer = antworten.kleinunternehmer ?? aktuell.kleinunternehmer;
   return {
-    rechtsform: art === null ? aktuell.rechtsform : art === "gmbh" || art === "ug" ? art : "einzelunternehmen",
+    rechtsform: art === null ? aktuell.rechtsform : art === "gbr" || art === "gmbh" || art === "ug" ? art : "einzelunternehmen",
     einkunftsart: art === "freiberufler" ? "selbstaendig" : art === "gewerbe" ? "gewerbe" : aktuell.einkunftsart,
     kleinunternehmer,
     versteuerung: kleinunternehmer ? aktuell.versteuerung : (antworten.versteuerung ?? aktuell.versteuerung),

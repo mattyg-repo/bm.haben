@@ -7,6 +7,22 @@
  * (Modulgrenzen, scripts/modulgrenzen/regel.ts).
  */
 export { insertImportedArticles, insertImportedContacts, planArticleImport, planContactImport } from "./csv-import.ts";
+export {
+  createGbrPartner,
+  updateGbrPartner,
+  gbrPartnerInput,
+  gbrPartnerOverview,
+  gbrPartnerAccounts,
+  listGbrPartners,
+  gbrSourcePartner,
+  gbrSourceOverview,
+  saveGbrSourcePartner,
+  refreshGbrAccountNames,
+  gbrAccountNames,
+  GbrError,
+  type GbrPartner,
+  type GbrSourceKind,
+} from "./gbr-partners.ts";
 export { applyDatevContactImport, planDatevContactImport, type DatevContactImportPlan } from "./datev-kontakte-import.ts";
 export { assertKnownUnit, createUnit, listUnits, loadUnitCodes, setUnitArchived, UnitError, type Unit } from "./units.ts";
 export {

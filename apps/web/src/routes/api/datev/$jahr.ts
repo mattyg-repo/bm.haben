@@ -1,3 +1,5 @@
+import { gbrTransfer } from "../../../server/modules/archiv/index.ts";
+import { toReadableStream } from "../../../server/modules/archiv/index.ts";
 import { parsePeriodKey, type VatPeriod } from "@haben/core";
 import { createFileRoute } from "@tanstack/react-router";
 import { HINWEIS_HEADER, hinweisHeader } from "../../../lib/download.ts";
@@ -19,6 +21,18 @@ export const Route = createFileRoute("/api/datev/$jahr")({
           period = parsed;
         }
         try {
+          if (new URL(request.url).searchParams.get("paket") === "gbr") {
+            const result = await gbrTransfer(year, new Date(), user, period);
+            return new Response(toReadableStream(result.chunks), {
+              headers: {
+                "Content-Type": "application/zip",
+                "Content-Disposition": `attachment; filename="${result.filename}"`,
+                "Cache-Control": "private, no-store",
+                "X-Content-Type-Options": "nosniff",
+                ...(result.warnings.length ? { [HINWEIS_HEADER]: hinweisHeader(result.warnings) } : {}),
+              },
+            });
+          }
           // Mit Personenkonten hält der Export die geschriebenen Nummern fest, im Namen des Benutzers; neue nur der Inhaber
           const { bytes, filename, warnings } = await datevExport(year, new Date(), { id: user.id, role: user.role }, period);
           return new Response(new Uint8Array(bytes), {

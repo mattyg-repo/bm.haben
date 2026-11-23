@@ -1,3 +1,5 @@
+import { getRouteApi } from "@tanstack/react-router";
+import { GbrPartnerChoice } from "../../components/GbrPartnerChoice.tsx";
 import { amountError, formatDecimal, parseEuro, type DirectBooking } from "@haben/core";
 import { useState } from "react";
 import { BEZUGSJAHR_FEHLER, SteuerFelder, steuerangabe, steuerWahlFuer, type SteuerOptionen, type SteuerWahl } from "../../components/SteuerFelder.tsx";
@@ -22,6 +24,7 @@ export interface SplitRow {
   key: number;
   /** "invoice:<id>", "document:<id>", eine Buchungsart ohne Beleg oder "steuer" */
   target: string;
+  partnerId?: string;
   amount: string;
   /** Nur bei "steuer": Steuerart, Bezugsjahr und Teil */
   steuer: SteuerWahl;
@@ -129,6 +132,7 @@ export function SplitForm({
   onCancel: () => void;
   onSubmit: (parts: SplitPart[]) => void;
 }) {
+  const gbr = getRouteApi("/_app/bank").useRouteContext().rechtsform === "gbr";
   const steuerStart = steuerWahlFuer(steuerOptionen, tx.bookingDate);
   const darlehenStart = darlehenWahlFuer(darlehenOptionen, tx.amount);
   const kategorieStart = kategorieWahlFuer(kategorieOptionen, tx.amount);
@@ -156,7 +160,7 @@ export function SplitForm({
       onSubmit={(event) => {
         event.preventDefault();
         if (!check()) return;
-        onSubmit(rows.map((r, i) => toPart(r, parsed[i]!)));
+        onSubmit(rows.map((r, i) => ({ ...toPart(r, parsed[i]!), partnerId: r.partnerId || undefined })));
       }}
     >
       <div className="section-label">Aufteilen</div>
@@ -196,6 +200,7 @@ export function SplitForm({
               </select>
             )}
           </Field>
+          {gbr && <GbrPartnerChoice value={row.partnerId ?? ""} onChange={(partnerId) => update(row.key, { partnerId })} disabled={busy} />}
           <Field label="Betrag" error={error(`betrag-${row.key}`)}>
             {(control) => (
               <input

@@ -1,3 +1,5 @@
+import { getRouteApi } from "@tanstack/react-router";
+import { GbrSourceChoice } from "../../components/GbrPartnerChoice.tsx";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type FormEvent } from "react";
@@ -25,6 +27,7 @@ export function AccountSettings({
   ledger: string | undefined;
   excludeBlockedBy: string | null;
 }) {
+  const gbr = getRouteApi("/_app/bank").useRouteContext().rechtsform === "gbr";
   const router = useRouter();
   const navigate = useNavigate({ from: "/bank" });
   const updateFn = useServerFn(updateBankAccount);
@@ -36,16 +39,21 @@ export function AccountSettings({
 
   if (!editing) {
     return (
-      <div className="small muted" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", margin: "8px 0 16px" }}>
-        <span>
-          {account.name} · {PURPOSE_SHORT[account.purpose]} ·{" "}
-          {account.iban ? account.iban.replace(/(.{4})/g, "$1 ").trim() : `Verrechnungskonto ${ledger ?? ""}`}
-        </span>
-        <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>
-          Name und Zweck
-        </button>
-        <ExcludeAccountButton account={account} blockedBy={excludeBlockedBy} />
-      </div>
+      <>
+        <div className="small muted" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", margin: "8px 0 16px" }}>
+          <span>
+            {account.name} · {PURPOSE_SHORT[account.purpose]} ·{" "}
+            {account.iban ? account.iban.replace(/(.{4})/g, "$1 ").trim() : `Verrechnungskonto ${ledger ?? ""}`}
+          </span>
+          <button type="button" className="btn btn-sm" onClick={() => setEditing(true)}>
+            Name und Zweck
+          </button>
+          <ExcludeAccountButton account={account} blockedBy={excludeBlockedBy} />
+        </div>
+        {gbr && account.purpose === "privat" && (
+          <GbrSourceChoice key={account.id} kind="bankkonto" sourceId={account.id} label="Gesellschafter des Privatkontos" />
+        )}
+      </>
     );
   }
 

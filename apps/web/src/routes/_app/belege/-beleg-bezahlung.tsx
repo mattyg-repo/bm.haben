@@ -1,3 +1,4 @@
+import { GbrSourceChoice } from "../../../components/GbrPartnerChoice.tsx";
 import { isKapitalgesellschaft, ownerLabels } from "@haben/core";
 import { formatDate } from "../../../lib/format.ts";
 import type { DocumentFormState } from "./-beleg-zustand.ts";
@@ -28,6 +29,7 @@ export function Bezahlung({ f, data }: { f: DocumentFormState; data: Detail }) {
         <input type="radio" name="payment" checked={payment === "kasse"} onChange={() => touch(setPayment)("kasse")} />
         Bar aus der Kasse (Zeile im Kassenbuch)
       </label>
+      {data.rechtsform === "gbr" && <GbrSourceChoice kind="document" sourceId={data.document.id} disabled={readOnly || running} />}
       {/* Nur an einer Gutschrift über die Bank: sie mindert ein schon bezahltes Entgelt, die Vorsteuer wartet auf den Ausgleich */}
       {gross !== null && gross < 0 && payment === "bank" && (
         <div>

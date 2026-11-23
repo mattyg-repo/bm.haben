@@ -11,6 +11,7 @@ const databaseUrl = process.env.E2E_DATABASE_URL ?? "";
 /** Name → Abstand des Ports zu E2E_PORT; der Hauptdurchlauf (app.spec.ts) hat den Port selbst */
 export const DURCHLAEUFE = {
   gmbh: 1,
+  gbr: 50,
   rechnungen: 2,
   "belege-steuern": 3,
   rueckfragen: 4,
@@ -101,7 +102,7 @@ export const TEILE = {
   ablauf: ["ablauf", "abzug", "mit-daten", "fremdrechnung-kleinunternehmer", "fints-abruf", "etsy-abruf"],
   "ablauf-2": ["ablauf", "abzug", "mit-daten-2", "zahlung-gebuehr", "bank-dubletten", "bank-bestaetigen"],
   "ablauf-3": ["ablauf", "abzug", "mit-daten-3", "paypal-abruf", "stripe-abruf"],
-  gmbh: ["gmbh", "rueckfragen", "belegimport", "bb-import", "beleg-storno", "dauerfrist-euer", "verrechnung", "firmen", "passwort", "fastbill-import"],
+  gmbh: ["gmbh", "gbr", "rueckfragen", "belegimport", "bb-import", "beleg-storno", "dauerfrist-euer", "verrechnung", "firmen", "passwort", "fastbill-import"],
   importe: [
     "wiso-import",
     "sevdesk-export",

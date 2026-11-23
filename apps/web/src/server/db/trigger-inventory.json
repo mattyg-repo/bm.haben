@@ -611,6 +611,13 @@
     },
     {
       "table": "public.company",
+      "name": "company_gbr_guard",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER company_gbr_guard BEFORE UPDATE ON public.company FOR EACH ROW EXECUTE FUNCTION public.haben_gbr_company_guard()",
+      "function": "public.haben_gbr_company_guard()"
+    },
+    {
+      "table": "public.company",
       "name": "company_kontenrahmen_kapg_lock",
       "enabled": "O",
       "definition": "CREATE TRIGGER company_kontenrahmen_kapg_lock BEFORE UPDATE ON public.company FOR EACH ROW EXECUTE FUNCTION public.haben_check_company_kontenrahmen_kapg()",
@@ -1177,6 +1184,69 @@
       "function": "public.haben_reject_truncate()"
     },
     {
+      "table": "public.gbr_partners",
+      "name": "gbr_partners_audit",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_partners_audit AFTER INSERT OR DELETE OR UPDATE ON public.gbr_partners FOR EACH ROW EXECUTE FUNCTION public.haben_audit()",
+      "function": "public.haben_audit()"
+    },
+    {
+      "table": "public.gbr_partners",
+      "name": "gbr_partners_guard",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_partners_guard BEFORE DELETE OR UPDATE ON public.gbr_partners FOR EACH ROW EXECUTE FUNCTION public.haben_gbr_partner_guard()",
+      "function": "public.haben_gbr_partner_guard()"
+    },
+    {
+      "table": "public.gbr_partners",
+      "name": "gbr_partners_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_partners_no_truncate BEFORE TRUNCATE ON public.gbr_partners FOR EACH STATEMENT EXECUTE FUNCTION public.haben_reject_truncate()",
+      "function": "public.haben_reject_truncate()"
+    },
+    {
+      "table": "public.gbr_source_partners",
+      "name": "gbr_source_partners_audit",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_source_partners_audit AFTER INSERT OR DELETE OR UPDATE ON public.gbr_source_partners FOR EACH ROW EXECUTE FUNCTION public.haben_audit()",
+      "function": "public.haben_audit()"
+    },
+    {
+      "table": "public.gbr_source_partners",
+      "name": "gbr_source_partners_guard",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_source_partners_guard BEFORE INSERT OR DELETE OR UPDATE ON public.gbr_source_partners FOR EACH ROW EXECUTE FUNCTION public.haben_gbr_source_guard()",
+      "function": "public.haben_gbr_source_guard()"
+    },
+    {
+      "table": "public.gbr_source_partners",
+      "name": "gbr_source_partners_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_source_partners_no_truncate BEFORE TRUNCATE ON public.gbr_source_partners FOR EACH STATEMENT EXECUTE FUNCTION public.haben_reject_truncate()",
+      "function": "public.haben_reject_truncate()"
+    },
+    {
+      "table": "public.gbr_transfers",
+      "name": "gbr_transfers_append_only",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_transfers_append_only BEFORE DELETE OR UPDATE ON public.gbr_transfers FOR EACH ROW EXECUTE FUNCTION public.haben_append_only()",
+      "function": "public.haben_append_only()"
+    },
+    {
+      "table": "public.gbr_transfers",
+      "name": "gbr_transfers_audit",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_transfers_audit AFTER INSERT ON public.gbr_transfers FOR EACH ROW EXECUTE FUNCTION public.haben_audit()",
+      "function": "public.haben_audit()"
+    },
+    {
+      "table": "public.gbr_transfers",
+      "name": "gbr_transfers_no_truncate",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER gbr_transfers_no_truncate BEFORE TRUNCATE ON public.gbr_transfers FOR EACH STATEMENT EXECUTE FUNCTION public.haben_reject_truncate()",
+      "function": "public.haben_reject_truncate()"
+    },
+    {
       "table": "public.import_batches",
       "name": "import_batches_append_only",
       "enabled": "O",
@@ -1574,6 +1644,13 @@
       "enabled": "O",
       "definition": "CREATE TRIGGER journal_entries_year_open BEFORE INSERT ON public.journal_entries FOR EACH ROW EXECUTE FUNCTION public.haben_check_year_open()",
       "function": "public.haben_check_year_open()"
+    },
+    {
+      "table": "public.journal_lines",
+      "name": "journal_lines_gbr_guard",
+      "enabled": "O",
+      "definition": "CREATE TRIGGER journal_lines_gbr_guard BEFORE INSERT ON public.journal_lines FOR EACH ROW EXECUTE FUNCTION public.haben_gbr_journal_guard()",
+      "function": "public.haben_gbr_journal_guard()"
     },
     {
       "table": "public.journal_lines",
@@ -3609,6 +3686,38 @@
       "securityDefiner": false,
       "sourceHash": "20d8bd3a81ca3f8423cff14608dcc12c4449ffe157ff9bc239ba814012f35abd",
       "definitionHash": "9f22d28e7fb4f43f27021f362327357fa3389c7bc54a9a17c054c9b8fd799bb3"
+    },
+    {
+      "name": "public.haben_gbr_company_guard()",
+      "config": [],
+      "language": "plpgsql",
+      "securityDefiner": false,
+      "sourceHash": "fe8d0ce2590f0b979e893706cbfde82ad50034010f7fa1bd83fa818f961acd20",
+      "definitionHash": "09434839637ed05919c8cabe9fc234044119af5e8cbb0f0d25fb0b59f2a8f273"
+    },
+    {
+      "name": "public.haben_gbr_journal_guard()",
+      "config": [],
+      "language": "plpgsql",
+      "securityDefiner": false,
+      "sourceHash": "d056a3c16402806f28ee40be1384f92a590289af03d7e7d684675458df5c6ec6",
+      "definitionHash": "3eb0bae848982cb8601d5338c2efa2ff1df11a8bcb289903df712c6957b4b652"
+    },
+    {
+      "name": "public.haben_gbr_partner_guard()",
+      "config": [],
+      "language": "plpgsql",
+      "securityDefiner": false,
+      "sourceHash": "f3eecddb9df7ef5d93c1c3e4a86e3e24fd20c6947c489d4c1ce0ff8dab744383",
+      "definitionHash": "55b07436b030fc1decd4a3145ad765c0834a015708e7e807e9f682014a731bc2"
+    },
+    {
+      "name": "public.haben_gbr_source_guard()",
+      "config": [],
+      "language": "plpgsql",
+      "securityDefiner": false,
+      "sourceHash": "d4c4201f2de7718bc7ed77ee804731df8833a186e21915cadc02596f8d506c3f",
+      "definitionHash": "01ee59fbe4acaba41632e848fc8216e289136a82281eb31855595f25b9110c35"
     },
     {
       "name": "public.haben_integrity_problems(max_rows integer)",

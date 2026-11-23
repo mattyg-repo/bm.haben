@@ -1,3 +1,4 @@
+import { gbrPostingLinesIn } from "../buchhaltung/index.ts";
 import {
   ACCOUNTS,
   gleicheSalden,
@@ -111,9 +112,21 @@ async function belege(year: number, q: Db | Tx, rechtsform: Rechtsform): Promise
           eigene,
         );
       erwartet = zeilenFuer(r.doc);
+      if (rechtsform === "gbr")
+        erwartet = await gbrPostingLinesIn(
+          q,
+          { kontenrahmen: r.kontenrahmen as Kontenrahmen, rechtsform, versteuerung: "ist", kleinunternehmer: false },
+          { sourceType: "document", sourceId: r.doc.id, date: r.date, lines: erwartet },
+        );
       // Vor #930 gebucht, mit Leistungszeitraum aus 0.9 (#879): Die Vorsteuer steht im Belegmonat statt auf dem Zwischenkonto
       // und zählt weiter nach dem Belegdatum (#930, „Bestand“); so gebucht ist der Beleg richtig
       bestand = zeilenFuer({ ...r.doc, serviceFrom: null, serviceTo: null });
+      if (rechtsform === "gbr")
+        bestand = await gbrPostingLinesIn(
+          q,
+          { kontenrahmen: r.kontenrahmen as Kontenrahmen, rechtsform, versteuerung: "ist", kleinunternehmer: false },
+          { sourceType: "document", sourceId: r.doc.id, date: r.date, lines: bestand },
+        );
     } catch {
       // Die heutige Buchungslogik nimmt den Beleg nicht mehr an (eine später verschärfte Regel): nichts zu vergleichen
       continue;

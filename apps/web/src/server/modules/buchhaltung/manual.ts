@@ -71,13 +71,13 @@ export async function createManualEntry(actor: string, input: ManualEntryInput, 
   return withActor(actor, async (tx) => {
     const books = await openBooks(tx);
     const gmbh = isKapitalgesellschaft(books.rechtsform);
-    if (!gmbh && parsed.kind === "eroeffnung") {
+    if (!gmbh && books.rechtsform !== "gbr" && parsed.kind === "eroeffnung") {
       throw new ManualEntryError("Eröffnungsbuchungen gibt es nur für GmbH und UG; im Einzelunternehmen rechnet die EÜR aus Rechnungen und Belegen.");
     }
     const issues = manualPostingIssues(parsed.lines, books.kontenrahmen, books.rechtsform, parsed.kind);
     if (parsed.kind === "eroeffnung") issues.push(...(await openingIssues(tx, parsed.date)));
     const mitSchluessel = parsed.lines.some((l) => l.taxCode);
-    if (!gmbh || mitSchluessel) {
+    if ((!gmbh || mitSchluessel) && !(books.rechtsform === "gbr" && parsed.kind === "eroeffnung")) {
       const kleinunternehmer = (await kleinunternehmerHistory(tx))(parsed.date);
       const eigene = await loadOwnAccountParents(books.kontenrahmen, tx);
       issues.push(...freieBuchungIssues(parsed.lines, { kontenrahmen: books.kontenrahmen, rechtsform: books.rechtsform, kleinunternehmer, eigene }));

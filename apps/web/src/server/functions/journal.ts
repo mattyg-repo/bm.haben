@@ -4,7 +4,7 @@ import { refreshOwnAccountNames } from "../modules/eigene-konten/index.ts";
 import { createManualEntry, knownAccounts, loadJournal, manualEntrySchema, reverseManualEntry } from "../modules/buchhaltung/index.ts";
 import { bookDatevEroeffnung, datevEroeffnung, datevEroeffnungSchema } from "../modules/archiv/index.ts";
 import { checkCashReversal } from "../modules/bank/index.ts";
-import { loadCompany } from "../modules/stammdaten/index.ts";
+import { refreshGbrAccountNames, loadCompany } from "../modules/stammdaten/index.ts";
 import { authMiddleware, readMiddleware } from "../middleware.ts";
 import { today } from "../today.ts";
 import { yearSchema } from "./schemas.ts";
@@ -24,7 +24,7 @@ export const getManualEntryForm = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async () => {
     const company = await loadCompany();
-    await refreshOwnAccountNames();
+    await Promise.all([refreshOwnAccountNames(), refreshGbrAccountNames()]);
     return {
       today: today(),
       kontenrahmen: company.kontenrahmen,

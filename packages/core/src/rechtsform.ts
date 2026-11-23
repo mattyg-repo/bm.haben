@@ -5,6 +5,7 @@
  */
 export const RECHTSFORMEN = {
   einzelunternehmen: "Einzelunternehmen",
+  gbr: "GbR (EÜR)",
   gmbh: "GmbH",
   ug: "UG (haftungsbeschränkt)",
 } as const;
@@ -15,7 +16,7 @@ export const RECHTSFORM_KEYS = Object.keys(RECHTSFORMEN) as [Rechtsform, ...Rech
 
 /** GmbH und UG sind Kapitalgesellschaften (§ 1 Abs. 1 Nr. 1 KStG), sie bilanzieren und haben keine Privatsphäre */
 export function isKapitalgesellschaft(rechtsform: Rechtsform): boolean {
-  return rechtsform !== "einzelunternehmen";
+  return rechtsform === "gmbh" || rechtsform === "ug";
 }
 
 /** Bezeichnungen für Geld zwischen Unternehmen und Inhaber bzw. Gesellschafter, je nach Rechtsform */
@@ -44,5 +45,12 @@ const GESELLSCHAFT_LABELS: OwnerLabels = {
 };
 
 export function ownerLabels(rechtsform: Rechtsform): OwnerLabels {
+  if (rechtsform === "gbr")
+    return {
+      bank: "Gesellschafter (Einlage oder Entnahme)",
+      documentPaid: "Von einem Gesellschafter ausgelegt",
+      cashIn: "Einlage eines Gesellschafters",
+      cashOut: "Entnahme eines Gesellschafters",
+    };
   return isKapitalgesellschaft(rechtsform) ? GESELLSCHAFT_LABELS : PERSON_LABELS;
 }

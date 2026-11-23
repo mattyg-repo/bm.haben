@@ -2234,6 +2234,34 @@
       "when": 1795431837210,
       "tag": "0318_siegel_standardwert_befund",
       "breakpoints": true
+    },
+    {
+      "idx": 319,
+      "version": "7",
+      "when": 1795438625928,
+      "tag": "0319_gbr_gesellschafter",
+      "breakpoints": true
+    },
+    {
+      "idx": 320,
+      "version": "7",
+      "when": 1795438763484,
+      "tag": "0320_gbr_sperren",
+      "breakpoints": true
+    },
+    {
+      "idx": 321,
+      "version": "7",
+      "when": 1795439621730,
+      "tag": "0321_gbr_uebergaben",
+      "breakpoints": true
+    },
+    {
+      "idx": 322,
+      "version": "7",
+      "when": 1795439687819,
+      "tag": "0322_gbr_uebergaben_sperren",
+      "breakpoints": true
     }
   ]
 }

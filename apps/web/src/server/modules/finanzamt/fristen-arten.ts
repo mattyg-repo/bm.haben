@@ -140,10 +140,11 @@ export function erklaerungFristen(c: Kontext, sentAnnual: { form: string; year: 
     const ust = !c.kleinunternehmerAm(`${year}-12-31`) || year < 2024;
     // GmbH und UG: keine EÜR und keine Einkommensteuer, dafür Körperschaft- und Gewerbesteuer und die E-Bilanz mit der
     // Frist der Steuererklärung (§ 5b EStG, § 149 Abs. 2 AO)
-    const person = !isKapitalgesellschaft(c.company.rechtsform);
+    const person = c.company.rechtsform === "einzelunternehmen";
+    const kapital = isKapitalgesellschaft(c.company.rechtsform);
     const forms = [
       ...(ust ? (["ust"] as const) : []),
-      ...(person ? (["euer"] as const) : (["kst", "gewst", "ebilanz"] as const)),
+      ...(person ? (["euer"] as const) : kapital ? (["kst", "gewst", "ebilanz"] as const) : []),
       ...(person && c.company.taxpayer.a ? (["est"] as const) : []),
     ];
     for (const form of forms) {
@@ -168,7 +169,7 @@ export function vorauszahlungFristen(c: Kontext): Frist[] {
   const fristen: Frist[] = [];
   // Einkommensteuer-Vorauszahlungen; ob welche festgesetzt sind, steht im Bescheid. Wer keine zahlt, schaltet die
   // Hinweise in den Einstellungen ab (#1240) und bekommt dann auch keinen Kalendereintrag
-  if (c.company.taxpayer.a && !isKapitalgesellschaft(c.company.rechtsform) && !c.company.taxpayer.keineVorauszahlungen) {
+  if (c.company.taxpayer.a && c.company.rechtsform === "einzelunternehmen" && !c.company.taxpayer.keineVorauszahlungen) {
     for (const year of [Number(c.today.slice(0, 4)), Number(c.today.slice(0, 4)) + 1]) {
       for (const [index, datum] of vorauszahlungstermine(year, c.bundesland).entries()) {
         if (datum < c.today || datum > c.bis) continue;

@@ -32,6 +32,7 @@ export const datevNumbersSchema = z.object({
 export async function datevNumbers() {
   const company = await loadCompany();
   return {
+    rechtsform: company.rechtsform,
     beraterNr: company.datevBeraterNr,
     mandantNr: company.datevMandantNr,
     kontenrahmen: company.kontenrahmen,
@@ -90,12 +91,15 @@ export interface DatevExporteur {
  * sie am Kontakt fest (datev_personenkonten, Trigger in 0172). Neue Nummern festschreiben darf nur der Inhaber; wer nur
  * lesen darf, bekommt den Stapel, solange alle Nummern darin schon festgeschrieben sind, und schreibt dabei nichts (#452).
  */
-export async function datevExport(
-  year: number,
-  now = new Date(),
-  exporteur?: DatevExporteur,
-  period?: VatPeriod,
-): Promise<{ bytes: Uint8Array; filename: string; bookings: number; warnings: string[] }> {
+type DatevResult = {
+  bytes: Uint8Array;
+  filename: string;
+  bookings: number;
+  warnings: string[];
+  entries: Pick<typeof schema.journalEntries.$inferSelect, "id" | "date" | "sourceType" | "sourceId">[];
+};
+
+export async function datevExport(year: number, now = new Date(), exporteur?: DatevExporteur, period?: VatPeriod): Promise<DatevResult> {
   const company = await loadCompany();
   if (!company.datevBeraterNr || !company.datevMandantNr) throw new DatevExportError("Berater- und Mandantennummer fehlen.");
   const { start, end } = period ? periodRange(period) : { start: `${year}-01-01`, end: `${year + 1}-01-01` };
@@ -184,7 +188,7 @@ export async function datevExport(
     exportEntries,
   );
   if (verwendet.length > 0) await festschreiben(exporteur, verwendet, year);
-  return { bytes, filename: `EXTF_Buchungsstapel_${key}.csv`, bookings: rows.length, warnings };
+  return exportResult(bytes, key, rows.length, warnings, entries);
 }
 
 /** Ablehnung für jemanden ohne Recht zum Vergeben: welche Kontakte noch keine Nummer haben */
@@ -257,4 +261,20 @@ async function festschreiben(
       .values(neu.map((n) => ({ contactId: n.contactId, rolle: n.rolle, nummer: n.nummer, jahr: year })))
       .onConflictDoNothing(),
   );
+}
+
+function exportResult(
+  bytes: Uint8Array,
+  key: string,
+  bookings: number,
+  warnings: string[],
+  entries: (typeof schema.journalEntries.$inferSelect)[],
+): DatevResult {
+  return {
+    bytes,
+    filename: `EXTF_Buchungsstapel_${key}.csv`,
+    bookings,
+    warnings,
+    entries: entries.map(({ id, date, sourceType, sourceId }) => ({ id, date, sourceType, sourceId })),
+  };
 }

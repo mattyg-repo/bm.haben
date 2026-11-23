@@ -68,8 +68,8 @@ export async function settingsLocks(today: string, q: Db | Tx = db): Promise<Set
       : null;
   // GmbH und UG tragen Bestandskonten vor; im neuen Kontenrahmen kämen die Vorträge nicht an (drizzle/0101)
   const kapgLock =
-    anyEntry && firma && isKapitalgesellschaft(firma.rechtsform)
-      ? "Bei GmbH und UG ist der Kontenrahmen ab der ersten Buchung fest: Die Vorträge der Bestandskonten stehen im bisherigen Kontenrahmen. Einen Wechsel stellt die Steuerberatung mit neuer Eröffnungsbilanz um."
+    anyEntry && firma && (isKapitalgesellschaft(firma.rechtsform) || firma.rechtsform === "gbr")
+      ? "Bei GbR, GmbH und UG ist der Kontenrahmen ab der ersten Buchung fest: Die Vorträge der Bestandskonten stehen im bisherigen Kontenrahmen. Einen Wechsel stellt die Steuerberatung mit neuer Eröffnungsbilanz um."
       : null;
   return {
     kontenrahmen: kapgLock ?? yearLock,

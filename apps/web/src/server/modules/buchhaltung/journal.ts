@@ -1,3 +1,4 @@
+import { refreshGbrAccountNames, gbrAccountNames } from "../stammdaten/index.ts";
 import {
   ACCOUNT_NAMES,
   ACCOUNTS,
@@ -57,12 +58,18 @@ const EXTRA_NAMES: Record<Kontenrahmen, Record<string, string>> = {
 };
 
 export function accountName(kontenrahmen: Kontenrahmen, account: string): string {
-  return ACCOUNT_NAMES[kontenrahmen][account] ?? EXTRA_NAMES[kontenrahmen][account] ?? ownAccountName(kontenrahmen, account) ?? "";
+  return (
+    gbrAccountNames(kontenrahmen)[account] ??
+    ACCOUNT_NAMES[kontenrahmen][account] ??
+    EXTRA_NAMES[kontenrahmen][account] ??
+    ownAccountName(kontenrahmen, account) ??
+    ""
+  );
 }
 
 /** Alle Konten mit Namen, die Haben kennt, z. B. als Hilfe beim Erfassen einer manuellen Buchung */
 export function knownAccounts(kontenrahmen: Kontenrahmen): Record<string, string> {
-  return { ...ownAccountNames(kontenrahmen), ...EXTRA_NAMES[kontenrahmen], ...ACCOUNT_NAMES[kontenrahmen] };
+  return { ...gbrAccountNames(kontenrahmen), ...ownAccountNames(kontenrahmen), ...EXTRA_NAMES[kontenrahmen], ...ACCOUNT_NAMES[kontenrahmen] };
 }
 
 /**
@@ -92,7 +99,7 @@ export async function verrechnungQuellen(ids: string[]): Promise<{
 
 /** Buchungen eines Monats mit ihren Zeilen, nur lesend */
 export async function loadJournal(year: number, month: number) {
-  await refreshOwnAccountNames();
+  await Promise.all([refreshOwnAccountNames(), refreshGbrAccountNames()]);
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
   const end = month === 12 ? `${year + 1}-01-01` : `${year}-${String(month + 1).padStart(2, "0")}-01`;
   const entries = await db

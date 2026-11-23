@@ -69,6 +69,12 @@ function AnnualPage() {
       </div>
 
       {data.mode === "simuliert" && <EricHinweis />}
+      {data.rechtsform === "gbr" && (
+        <p className="banner">
+          Die EÜR-GbR führt hier ihre Umsatzsteuer. Gewinnverteilung und Feststellungserklärung werden in dieser Ausbaustufe außerhalb von Haben erstellt; die
+          laufende EÜR steht unter Auswertungen.
+        </p>
+      )}
 
       {gesellschaft && (
         <>
@@ -87,16 +93,16 @@ function AnnualPage() {
       )}
 
       <div className="stack" style={{ gap: 24 }}>
-        {!gesellschaft && <Reihenfolge data={data} />}
+        {data.rechtsform === "einzelunternehmen" && <Reihenfolge data={data} />}
         <UstSection data={data} />
-        {!gesellschaft && <EuerSection data={data} />}
-        {!gesellschaft && <EstSection key={data.year} data={data} />}
+        {data.rechtsform === "einzelunternehmen" && <EuerSection data={data} />}
+        {data.rechtsform === "einzelunternehmen" && <EstSection key={data.year} data={data} />}
         {data.kapg && <KapgGemeinsameHinweise data={data} />}
         {data.kapg && <KstSection data={data} />}
         {data.kapg && <GewstSection data={data} />}
         {data.kapg && <KapgAngaben key={`kapg-${data.year}`} data={data} />}
         {/* Die vorausgefüllte Steuererklärung gibt es nur für die Einkommensteuer einer Person */}
-        {!gesellschaft && (
+        {data.rechtsform === "einzelunternehmen" && (
           <div id="vast" className="jump-target">
             <VastBelege key={`vast-${data.year}`} data={data} />
           </div>

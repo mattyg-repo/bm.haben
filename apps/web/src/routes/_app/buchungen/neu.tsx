@@ -113,7 +113,7 @@ function ManualEntryForm({ data }: { data: Data }) {
     <>
       <form ref={form} className="card stack" onSubmit={onSubmit} aria-label="Manuelle Buchung" noValidate>
         <Buchungshinweise kontenrahmen={data.kontenrahmen} gmbh={gmbh} mitSchluesseln={mitSchluesseln} />
-        {gmbh && (
+        {(gmbh || data.rechtsform === "gbr") && (
           <ArtDerBuchung
             kind={kind}
             umbuchung={() => setKind("umbuchung")}

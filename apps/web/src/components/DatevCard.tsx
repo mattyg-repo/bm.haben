@@ -52,7 +52,10 @@ export function DatevCard({ years, numbers }: { years: number[]; numbers: Awaite
     event.preventDefault();
     const href = event.currentTarget.href;
     void run(async () => {
-      const hinweis = await downloadFrom(href, filename);
+      const hinweis = await downloadFrom(
+        href,
+        new URL(href).searchParams.has("paket") ? filename.replace("EXTF_Buchungsstapel_", "Haben-GbR-").replace(/\.csv$/, ".zip") : filename,
+      );
       if (hinweis) setNotice({ tone: "info", text: hinweis });
     });
   }
@@ -150,9 +153,16 @@ export function DatevCard({ years, numbers }: { years: number[]; numbers: Awaite
           )}
         </Field>
         {saved ? (
-          <a className="btn btn-primary" href={downloadHref} download={filename} onClick={onDownload}>
-            Buchungsstapel herunterladen
-          </a>
+          <>
+            {numbers.rechtsform === "gbr" && (
+              <a className="btn" href={`${downloadHref}${downloadHref.includes("?") ? "&" : "?"}paket=gbr`} onClick={onDownload}>
+                GbR-Übergabepaket mit Originalbelegen
+              </a>
+            )}
+            <a className="btn btn-primary" href={downloadHref} download={filename} onClick={onDownload}>
+              Buchungsstapel herunterladen
+            </a>
+          </>
         ) : (
           <span className="small muted" style={{ alignSelf: "center" }}>
             Zum Herunterladen erst speichern.

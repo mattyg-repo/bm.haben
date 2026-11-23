@@ -46,7 +46,7 @@ export interface DatevVorgang {
   inEroeffnung: boolean;
 }
 
-async function links(entries: readonly Entry[]): Promise<Map<string, { invoiceId: string | null; documentId: string | null }>> {
+export async function datevQuellen(entries: readonly Entry[]): Promise<Map<string, { invoiceId: string | null; documentId: string | null }>> {
   const ids = (type: Entry["sourceType"]) => [...new Set(entries.filter((e) => e.sourceType === type).map((e) => e.sourceId))];
   const allocationIds = ids("allocation");
   const writeOffIds = ids("ausbuchung");
@@ -151,7 +151,7 @@ async function contactsById(ids: string[]) {
 
 /** Vorgang je Quelle (sourceId) der Buchungen */
 export async function datevVorgaenge(entries: readonly Entry[]): Promise<Map<string, DatevVorgang>> {
-  const linked = await links(entries);
+  const linked = await datevQuellen(entries);
   const values = [...linked.values()];
   const source = await sources(
     [...new Set(values.flatMap((l) => (l.invoiceId ? [l.invoiceId] : [])))],

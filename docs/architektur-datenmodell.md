@@ -11,6 +11,8 @@ Alle Tabellen stehen in `apps/web/src/server/db/schema.ts`. Beträge sind ganze 
 
 ## Stammdaten
 
+GbR-Erweiterung: `gbr_partners` hält Name und Beteiligungszeit mit unveränderbarer Kontenkennung (Audit, kein Löschen/TRUNCATE). `gbr_source_partners` ordnet Beleg, Bankumsatz oder Privatkonto einer Person zu; nach der ersten Buchung sperrt ein Trigger die Zuordnung. `gbr_transfers` protokolliert erstellte Übergabepakete mit Zeitraum und Journal-IDs (nur anhängen, Audit, kein TRUNCATE).
+
 | Tabelle | Zweck | Schutz |
 | --- | --- | --- |
 | `year_closings` | Abgeschlossene Geschäftsjahre (GmbH, UG) mit Zahl und Prüfwert der Buchungen | Nur anhängen; Buchungen mit Datum in einem abgeschlossenen Jahr abgelehnt; Audit |

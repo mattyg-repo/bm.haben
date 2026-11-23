@@ -16,6 +16,8 @@ import {
   formatEuro,
   homeofficeSatz,
   isKapitalgesellschaft,
+  gbrAccountFamily,
+  gbrBaseAccount,
   monthsOfPeriod,
   periodKey,
   STEUER_KONTEN,
@@ -318,6 +320,8 @@ function euerFigures(euer: EuerResult): EuerFigures {
 
 /** Entnahmen und Einlagen laut Journal (Privatkonten), je Buchung in deren Kontenrahmen, damit ein Wechsel das Vorjahr nicht verfälscht */
 async function privateMovements(year: number) {
+  const gbr = (await loadCompany()).rechtsform === "gbr";
+  const family = (account: string) => (gbr ? gbrAccountFamily(account) : [account]);
   const rows = await db
     .select({
       kontenrahmen: schema.journalEntries.kontenrahmen,
@@ -328,6 +332,7 @@ async function privateMovements(year: number) {
     .innerJoin(schema.journalEntries, eq(schema.journalEntries.id, schema.journalLines.entryId))
     .where(
       and(
+        sql`${schema.journalEntries.sourceType} <> 'eroeffnung'`,
         gte(schema.journalEntries.date, `${year}-01-01`),
         lt(schema.journalEntries.date, `${year + 1}-01-01`),
         or(
@@ -335,10 +340,10 @@ async function privateMovements(year: number) {
             and(
               eq(schema.journalEntries.kontenrahmen, kr),
               inArray(schema.journalLines.account, [
-                ACCOUNTS[kr].privatentnahmen,
-                ACCOUNTS[kr].spenden,
-                STEUER_KONTEN[kr].privatsteuern,
-                ACCOUNTS[kr].privateinlagen,
+                ...family(ACCOUNTS[kr].privatentnahmen),
+                ...family(ACCOUNTS[kr].spenden),
+                ...family(STEUER_KONTEN[kr].privatsteuern),
+                ...family(ACCOUNTS[kr].privateinlagen),
               ]),
             ),
           ),
@@ -346,7 +351,8 @@ async function privateMovements(year: number) {
       ),
     )
     .groupBy(schema.journalEntries.kontenrahmen, schema.journalLines.account);
-  const saldo = (konto: (kr: Kontenrahmen) => string) => rows.filter((r) => r.account === konto(r.kontenrahmen)).reduce((sum, r) => sum + Number(r.saldo), 0);
+  const saldo = (konto: (kr: Kontenrahmen) => string) =>
+    rows.filter((r) => (gbr ? gbrBaseAccount(r.kontenrahmen, r.account) : r.account) === konto(r.kontenrahmen)).reduce((sum, r) => sum + Number(r.saldo), 0);
   // Private Steuern vom Geschäftskonto (Privatsteuern, steuerzahlung.ts) sind Entnahmen, ihre Erstattungen mindern sie.
   // Übersteigen die Erstattungen die Zahlungen, ist der Rest eine Einlage: Die Anlage EÜR kennt keine negativen Entnahmen.
   const privatsteuern = saldo((kr) => STEUER_KONTEN[kr].privatsteuern);
@@ -846,6 +852,8 @@ type Checked = { company: Awaited<ReturnType<typeof loadCompany>>; data: UstYear
 export async function checkAnnual(form: AnnualForm, year: number, today: string): Promise<Checked> {
   const company = await loadCompany();
   // Eine Kapitalgesellschaft bilanziert und zahlt Körperschaftsteuer: keine Anlage EÜR, keine Einkommensteuer
+  if (form !== "ust" && company.rechtsform === "gbr")
+    throw new AnnualError("Gewinnverteilung, Anlage EÜR und Feststellungserklärung der GbR werden in dieser Ausbaustufe außerhalb von Haben abgegeben.");
   if (form !== "ust" && isKapitalgesellschaft(company.rechtsform)) {
     throw new AnnualError(`${company.rechtsform === "ug" ? "Eine UG" : "Eine GmbH"} gibt keine Anlage EÜR und keine Einkommensteuererklärung ab.`);
   }

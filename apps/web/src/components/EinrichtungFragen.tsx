@@ -66,7 +66,7 @@ export interface UnternehmenProps {
 
 /** Schritt 1: Art des Unternehmens und Umsatzsteuer; schreibt die vorhandenen Felder der Firmendaten */
 export function UnternehmenFragen({ antworten, setzen, stand, locks, steuerberatung, setSteuerberatung }: UnternehmenProps) {
-  const rechtsformVon = (art: Selbstaendig) => (art === "gmbh" || art === "ug" ? art : "einzelunternehmen");
+  const rechtsformVon = (art: Selbstaendig) => (art === "gbr" || art === "gmbh" || art === "ug" ? art : "einzelunternehmen");
   // Gesperrt: nur Antworten, die die Rechtsform ändern; Freiberufler und Gewerbe ändern nur die Einkunftsart
   const arten = (Object.keys(SELBSTAENDIG) as Selbstaendig[]).map((art) => ({
     value: art,

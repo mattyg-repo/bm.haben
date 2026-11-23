@@ -128,6 +128,7 @@ export * from "./anzahlung-bilanz.ts";
 export * from "./advance-receivables.ts";
 export * from "./offene-posten-vorjahre.ts";
 export * from "./own-accounts.ts";
+export * from "./gbr-konten.ts";
 export * from "./external-settlements.ts";
 export * from "./leistungsdatum.ts";
 export * from "./paragraph4.ts";
