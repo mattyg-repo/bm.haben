@@ -101,6 +101,8 @@ async function bookAssetYear(tx: Tx, books: Books, asset: Asset, plan: YearPlan,
   const row: ScheduleYear = plan.row ?? { year, opening: 0, addition: 0, depreciation: 0, disposal: 0, closing: 0 };
   await bookOpening(tx, books, asset);
   let entryId = await bookDepreciationRow(tx, books, asset, row, year);
+  if (books.rechtsform === "gbr" && plan.privateUse)
+    throw new AssetUserError("Kfz-Privatnutzung der GbR wird in dieser Ausbaustufe außerhalb von Haben erfasst.");
   if (plan.privateUse) {
     const useId = await bookPrivateUse(tx, books, asset, plan.privateUse, year);
     entryId ??= useId;

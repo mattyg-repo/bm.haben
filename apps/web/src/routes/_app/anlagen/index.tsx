@@ -1,4 +1,4 @@
-import { currentYear, ASSET_KINDS, ASSET_METHODS, formatEuro, isKapitalgesellschaft } from "@haben/core";
+import { currentYear, ASSET_KINDS, ASSET_METHODS, formatEuro } from "@haben/core";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
@@ -27,7 +27,8 @@ function AssetsPage() {
   const { busy, notice, setNotice, run } = useAction();
   const { year, assets } = data;
   // Private Kfz-Nutzung und EÜR gibt es nur im Einzelunternehmen; in GmbH und UG ist die Privatnutzung Arbeitslohn
-  const person = !isKapitalgesellschaft(Route.useRouteContext().rechtsform);
+  const rechtsform = Route.useRouteContext().rechtsform;
+  const person = rechtsform === "einzelunternehmen";
 
   // Jahre, in denen es Anlagen gibt, und das aktuelle
   const years = [...new Set([currentYear(), year, ...assets.flatMap((a) => a.schedule.map((r) => r.year)).filter((y) => y <= currentYear() + 1)])].sort(
@@ -66,6 +67,10 @@ function AssetsPage() {
           )}
         </div>
       </div>
+
+      {rechtsform === "gbr" && (
+        <p className="muted">Die AfA enthält in dieser Ausbaustufe keine private Kfz-Nutzung der Gesellschafter. Diese erfasst du außerhalb von Haben.</p>
+      )}
 
       {years.length > 1 && (
         <nav className="filter-row" aria-label="Jahr wählen">

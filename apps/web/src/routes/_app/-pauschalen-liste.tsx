@@ -53,7 +53,7 @@ export function detailText(entry: Entry): string {
 }
 
 /** GmbH und UG: keine Pauschalen; Auslagen des Gesellschafters gehen mit Beleg auf das Verrechnungskonto */
-export function OnlyEinzelunternehmen() {
+export function OnlyEinzelunternehmen({ gbr = false }: { gbr?: boolean }) {
   return (
     <>
       <div className="page-head">
@@ -63,8 +63,14 @@ export function OnlyEinzelunternehmen() {
         </div>
       </div>
       <p className="muted" style={{ marginTop: 0, maxWidth: 760 }}>
-        Pauschalen gibt es nur im Einzelunternehmen. Erstattet die Gesellschaft dem Gesellschafter Reisekosten oder Auslagen, lade die Abrechnung unter{" "}
-        <Link to="/belege">Belege</Link> hoch und wähle „Vom Gesellschafter ausgelegt“.
+        {gbr ? (
+          "Pauschalen der GbR-Gesellschafter und ihre Sonderbetriebsausgaben erfasst du in dieser Ausbaustufe außerhalb von Haben. Rechnungen der GbR, die ein Gesellschafter ausgelegt hat, erfasst du unter Belege mit seiner Gesellschafterzuordnung."
+        ) : (
+          <>
+            Pauschalen gibt es nur im Einzelunternehmen. Erstattet die Gesellschaft dem Gesellschafter Reisekosten oder Auslagen, lade die Abrechnung unter{" "}
+            <Link to="/belege">Belege</Link> hoch und wähle „Vom Gesellschafter ausgelegt“.
+          </>
+        )}
       </p>
     </>
   );

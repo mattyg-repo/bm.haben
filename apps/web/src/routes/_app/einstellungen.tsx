@@ -1,4 +1,4 @@
-import { currentFilingPeriod, isKapitalgesellschaft } from "@haben/core";
+import { currentFilingPeriod } from "@haben/core";
 import { redirect, createFileRoute } from "@tanstack/react-router";
 import { BackupCard } from "../../components/BackupCard.tsx";
 import { BereicheCard } from "../../components/BereicheCard.tsx";
@@ -218,7 +218,7 @@ function SettingsPage() {
   const uebersicht = search.bereich === undefined;
   // Eine GmbH oder UG zahlt keine Einkommensteuer; die persönlichen Angaben braucht ELSTER dort für Nachrichten und Postfach
   const areas = settingsAreas(oidc.only).map((a) =>
-    a.id === "persoenlich" && isKapitalgesellschaft(company.rechtsform) ? { ...a, hint: "Für Nachrichten an das Finanzamt" } : a,
+    a.id === "persoenlich" && company.rechtsform !== "einzelunternehmen" ? { ...a, hint: "Für Nachrichten an das Finanzamt" } : a,
   );
   const area = areas.find((a) => a.id === bereich)!;
   return (

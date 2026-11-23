@@ -1,6 +1,6 @@
 import { euerZuordnung } from "./journal-euer.ts";
 import { kontoart } from "./ledger.ts";
-import { FREIE_STEUERSCHLUESSEL, isPrivateAccount, type ManualLine } from "./manual.ts";
+import { FREIE_STEUERSCHLUESSEL, isGbrPrivateAccount, isPrivateAccount, type ManualLine } from "./manual.ts";
 import { roundHalfAwayFromZero, type Cents } from "./money.ts";
 import { resolveOwnAccount } from "./own-accounts.ts";
 import { ACCOUNTS, type ExpenseCategory, type Kontenrahmen, type PostingLine } from "./posting.ts";
@@ -32,6 +32,7 @@ export function freieBuchungIssues(lines: readonly ManualLine[], k: FreieBuchung
   const issues: string[] = [];
   const mitSchluessel = lines.some((l) => l.taxCode);
   const gmbh = isKapitalgesellschaft(k.rechtsform);
+  const privat = (account: string) => (k.rechtsform === "gbr" ? isGbrPrivateAccount(k.kontenrahmen, account) : isPrivateAccount(k.kontenrahmen, account));
   if (mitSchluessel && k.kleinunternehmer) issues.push("Als Kleinunternehmer bucht Haben keine Umsatzsteuer (§ 19 Abs. 1 UStG)");
   const erfolg = (account: string) => kontoart(k.kontenrahmen, account) !== "bestand";
   for (const [index, line] of lines.entries()) {
@@ -42,8 +43,7 @@ export function freieBuchungIssues(lines: readonly ManualLine[], k: FreieBuchung
       issues.push(`${row}: Konto ${line.account} hat keine Zeile in der EÜR`);
     }
     if (mitSchluessel && !line.taxCode) {
-      const gegenkonto =
-        erfolg(line.account) || (gmbh ? line.account === ACCOUNTS[k.kontenrahmen].gesellschafter : isPrivateAccount(k.kontenrahmen, line.account));
+      const gegenkonto = erfolg(line.account) || (gmbh ? line.account === ACCOUNTS[k.kontenrahmen].gesellschafter : privat(line.account));
       if (!gegenkonto) {
         issues.push(
           `${row}: Gegenkonto einer Zeile mit Steuerschlüssel ist ein Erfolgskonto oder ${gmbh ? "das Gesellschafter-Verrechnungskonto" : "ein Privatkonto"}`,
@@ -53,7 +53,7 @@ export function freieBuchungIssues(lines: readonly ManualLine[], k: FreieBuchung
   }
   // Im Einzelunternehmen wirkt in der EÜR nur, was Erfolgskonten und Privat berühren; eine Buchung zwischen anderen
   // Bestandskonten neben einem Erfolgskonto wäre eine Einnahme oder Ausgabe ohne Zahlung
-  if (!gmbh && lines.some((l) => erfolg(l.account)) && lines.some((l) => !erfolg(l.account) && !isPrivateAccount(k.kontenrahmen, l.account))) {
+  if (!gmbh && lines.some((l) => erfolg(l.account)) && lines.some((l) => !erfolg(l.account) && !privat(l.account))) {
     issues.push("Im Einzelunternehmen steht neben einem Erfolgskonto nur ein Privatkonto; Zahlungen gehen über Bank oder Kasse");
   }
   return issues;

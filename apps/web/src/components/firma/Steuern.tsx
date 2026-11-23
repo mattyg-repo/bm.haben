@@ -45,7 +45,9 @@ export function Steuern({
             locks.rechtsform ??
             (gesellschaft
               ? "Ohne EÜR, Einkommensteuer, Pauschalen und Privatanteile; Geld vom und an den Gesellschafter geht auf das Verrechnungskonto."
-              : "Mit Privatkonten, Anlage EÜR und Einkommensteuer.")
+              : rechtsform === "gbr"
+                ? "EÜR-GbR mit Gesellschafterkonten. Abschluss, Gewinnverteilung und Feststellung zunächst im Fremdprogramm."
+                : "Mit Privatkonten, Anlage EÜR und Einkommensteuer.")
           }
         >
           {(control) => (

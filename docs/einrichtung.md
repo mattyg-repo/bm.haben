@@ -26,7 +26,7 @@ In dieser Reihenfolge kommst du am schnellsten zu einer vollständigen Buchhaltu
 11. Optional: deine Steuerberatung mit einem [eigenen Zugang](#zugang-für-die-steuerberatung) einladen
 
 > [!IMPORTANT]
-> Rechtsform, Versteuerung, Kontenrahmen und Kleinunternehmerstatus legst du fest, bevor du die erste Rechnung festschreibst oder den ersten Beleg buchst. Die Rechtsform ist ab der ersten Buchung fest, bei GmbH und UG auch der Kontenrahmen. Sobald es im laufenden Jahr Buchungen gibt, sperrt Haben die Umstellung bis zum nächsten Jahreswechsel (siehe [Sperren](#wann-sich-die-einstellungen-ändern-lassen)).
+> Rechtsform, Versteuerung, Kontenrahmen und Kleinunternehmerstatus legst du fest, bevor du die erste Rechnung festschreibst oder den ersten Beleg buchst. Die Rechtsform ist ab der ersten Buchung fest, bei GbR, GmbH und UG auch der Kontenrahmen. Sobald es im laufenden Jahr Buchungen gibt, sperrt Haben die Umstellung bis zum nächsten Jahreswechsel (siehe [Sperren](#wann-sich-die-einstellungen-ändern-lassen)).
 
 ## Konto anlegen
 
@@ -112,7 +112,7 @@ Seltenes steht eingeklappt, mit dem Gesetzten in der Überschrift: **Handelsregi
 | Kontoinhaber | Nur nötig, wenn das Konto nicht auf den Firmennamen läuft. Steht im GiroCode, in der Fußzeile und in der E-Rechnung (BT-85); leer = Firmenname. Höchstens 70 Zeichen, siehe [GiroCode](rechnungen-zahlung.md#girocode) |
 | Gläubiger-ID | Nur für [SEPA-Lastschriften](kontakte.md#sepa-lastschriftmandate) nötig. Die Bundesbank vergibt sie auf Antrag; 18 Stellen wie `DE98ZZZ09999999999`. Haben prüft die Prüfziffer nach EPC262-08 und speichert sie ohne Leerzeichen |
 | Rechtsform | Einzelunternehmen, GbR (EÜR), GmbH oder UG (haftungsbeschränkt), siehe [unten](#rechtsform-einzelunternehmen-gmbh-oder-ug) |
-| Einkunftsart | Nur im Einzelunternehmen: selbständige Arbeit oder Gewerbebetrieb, für die Anlage EÜR, siehe [Jahreserklärungen](jahreserklaerung.md) |
+| Einkunftsart | Im Einzelunternehmen und bei der GbR: selbständige Arbeit oder Gewerbebetrieb. Die Anlage EÜR übermittelt Haben nur für Einzelunternehmen, siehe [Jahreserklärungen](jahreserklaerung.md) |
 | Sitz, Registergericht, Registernummer | Nur GmbH und UG, Abschnitt **Handelsregister und Geschäftsführung**: wie im Registerauszug, etwa „Amtsgericht Bremen“ und „HRB 12345 HB“. Sie gehören in den Jahresabschluss (§ 264 Abs. 1a HGB), stehen auf der [Bilanz zur Hinterlegung](gmbh-abschluss.md#hinterlegung-beim-unternehmensregister-gmbh-und-ug) und auf jedem Geschäftsbrief (siehe [Pflichtangaben einer GmbH oder UG](rechnungen.md#pflichtangaben-einer-gmbh-oder-ug)). Sitz laut Gesellschaftsvertrag; leer = Ort der Anschrift |
 | Geschäftsführer | Nur GmbH und UG: alle Geschäftsführer, einer je Zeile, mit Familiennamen und mindestens einem ausgeschriebenen Vornamen, etwa „Erika Mustermann“ (§ 35a Abs. 1 GmbHG). Stehen im Fuß von Rechnung, Angebot, Mahnung und Lieferschein und unter E-Mails an Kunden |
 | Vorsitz des Aufsichtsrats | Nur, wenn die Gesellschaft einen Aufsichtsrat mit Vorsitz gebildet hat; sonst leer lassen |
@@ -209,7 +209,7 @@ Die Einstellung wirkt auf alles, was danach gebucht wird. Bereits festgeschriebe
 
 ## Kontenrahmen: SKR03 oder SKR04
 
-Der Kontenrahmen legt fest, auf welche Kontonummern Haben bucht. Wähle denselben wie in Lexoffice oder bei deiner Steuerberatung. Er wirkt auf alle Buchungen (Rechnungen, Belege, Zahlungen) und auf die Kontonamen im Journal. Jede Buchung speichert den Kontenrahmen, mit dem sie erstellt wurde; ein späterer Wechsel ändert bestehende Buchungen nicht. Wechseln kannst du nur zum Jahresbeginn, bevor im neuen Jahr gebucht wird. Bei GmbH und UG ist der Kontenrahmen ab der ersten Buchung fest, in App und Datenbank (`0101_kontenrahmen_kapg.sql`): Die Bestandskonten tragen ihre Salden vor, und im neuen Kontenrahmen kämen die Vorträge nicht an. Einen Wechsel stellt die Steuerberatung mit einer neuen Eröffnungsbilanz um.
+Der Kontenrahmen legt fest, auf welche Kontonummern Haben bucht. Wähle denselben wie in Lexoffice oder bei deiner Steuerberatung. Er wirkt auf alle Buchungen (Rechnungen, Belege, Zahlungen) und auf die Kontonamen im Journal. Jede Buchung speichert den Kontenrahmen, mit dem sie erstellt wurde; ein späterer Wechsel ändert bestehende Buchungen nicht. Im Einzelunternehmen kannst du zum Jahresbeginn wechseln, bevor im neuen Jahr gebucht wird. Bei GbR, GmbH und UG ist der Kontenrahmen ab der ersten Buchung fest, in App und Datenbank (`0101_kontenrahmen_kapg.sql`, `0320_gbr_sperren.sql`): Die Bestands- beziehungsweise Gesellschafterkonten tragen ihre Salden vor, und im neuen Kontenrahmen kämen die Vorträge nicht an. Einen Wechsel stimmt die Steuerberatung über eine neue Buchhaltung mit passenden Anfangsbeständen ab.
 
 Einige Beispiele:
 
@@ -266,7 +266,7 @@ Mehr unter [Rechnungen › Mahnwesen](rechnungen-zahlung.md#mahnwesen).
 
 ## Privatanteile
 
-Nur im Einzelunternehmen; bei GmbH und UG fehlt der Abschnitt. Unter **Privatanteil Telefon in %** und **Privatanteil Internet in %** legst du fest, welcher Anteil dieser Rechnungen privat ist, z. B. 20 %. Die Felder nehmen ganze Prozent von 0 bis 100, auch mit „%“; leer oder 0 heißt kein Privatanteil. Anderes melden sie am Feld, und gespeichert wird nichts. Neue Belege der Kategorien übernehmen den Wert; am einzelnen Beleg lässt er sich ändern. Mehr unter [Belege](belege.md#privatanteil).
+Im Einzelunternehmen und bei der GbR; bei GmbH und UG fehlt der Abschnitt. Unter **Privatanteil Telefon in %** und **Privatanteil Internet in %** legst du fest, welcher Anteil dieser Rechnungen privat ist, z. B. 20 %. Die Felder nehmen ganze Prozent von 0 bis 100, auch mit „%“; leer oder 0 heißt kein Privatanteil. Anderes melden sie am Feld, und gespeichert wird nichts. Neue Belege der Kategorien übernehmen den Wert; am einzelnen Beleg lässt er sich ändern. Mehr unter [Belege](belege.md#privatanteil).
 
 ## Fremdwährung
 
@@ -288,7 +288,7 @@ Kontenrahmen, Versteuerung und Kleinunternehmerstatus gelten für ein ganzes Ges
 
 | Einstellung | Gesperrt, wenn |
 | --- | --- |
-| Kontenrahmen | im laufenden Jahr gebucht wurde |
+| Kontenrahmen | im laufenden Jahr gebucht wurde; bei GbR, GmbH und UG ab der ersten Buchung irgendeines Jahres |
 | Versteuerung (Ist oder Soll) | im laufenden Jahr gebucht wurde oder Rechnungen noch offen sind; ihre Umsatzsteuer würde sonst doppelt oder gar nicht angemeldet |
 | Kleinunternehmer einschalten | im laufenden Jahr gebucht wurde |
 | Kleinunternehmer ausschalten | nie |

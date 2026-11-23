@@ -134,6 +134,11 @@ export function isPrivateAccount(kontenrahmen: Kontenrahmen, account: string): b
   return kontenrahmen === "SKR03" ? n >= 1800 && n <= 1899 : n >= 2100 && n <= 2199;
 }
 
+/** Zusätzlich SKR04-Spenden (VH), DATEV 1000181, Anlage: https://www.datev.de/dnlexom/v2/content/files/st72057608810363275_de.pdf */
+export function isGbrPrivateAccount(kontenrahmen: Kontenrahmen, account: string): boolean {
+  return isPrivateAccount(kontenrahmen, account) || (kontenrahmen === "SKR04" && /^225[0-9]$/.test(account));
+}
+
 const isCents = (value: number) => Number.isInteger(value) && value >= 0 && value <= 100_000_000_00;
 
 /**
@@ -182,7 +187,7 @@ export function manualPostingIssues(
     } else if (
       kind === "eroeffnung" &&
       !carriesForward(kontenrahmen, line.account) &&
-      !(rechtsform === "gbr" && isPrivateAccount(kontenrahmen, line.account))
+      !(rechtsform === "gbr" && isGbrPrivateAccount(kontenrahmen, line.account))
     ) {
       issues.push(`${row}: Konto ${line.account} ist ein Erfolgskonto; die Eröffnung übernimmt nur Bestände`);
     } else if (line.account.startsWith("9")) issues.push(`${row}: Konto ${line.account} ist ein Vortrags- oder statistisches Konto`);

@@ -186,6 +186,7 @@ async function postEntry(
   const books = await openBooks(tx);
   // Die Pauschalen ersetzen Ausgaben des Inhabers (Gegenkonto Privateinlage); eine GmbH erstattet sie dem Gesellschafter mit Beleg
   if (isKapitalgesellschaft(books.rechtsform)) throw new PauschaleError("Pauschalen gibt es nur im Einzelunternehmen.");
+  if (books.rechtsform === "gbr") throw new PauschaleError("Pauschalen der GbR-Gesellschafter werden in dieser Ausbaustufe außerhalb von Haben erfasst.");
   const aufwand = PAUSCHALE_KONTEN[input.art][books.kontenrahmen].konto;
   const einlage = ACCOUNTS[books.kontenrahmen].privateinlagen;
   const [soll, haben] = input.amount >= 0 ? [aufwand, einlage] : [einlage, aufwand];

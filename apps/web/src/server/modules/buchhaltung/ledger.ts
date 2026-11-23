@@ -4,7 +4,7 @@ import {
   carryForward,
   resolveOwnAccount,
   isKapitalgesellschaft,
-  isPrivateAccount,
+  isGbrPrivateAccount,
   type Cents,
   type KontenblattZeile,
   type Kontenrahmen,
@@ -60,6 +60,8 @@ export async function post(tx: Tx, books: Books, posting: Posting): Promise<stri
   const closedYear = Number(posting.date.slice(0, 4));
   const [closed] = await tx.select({ year: schema.yearClosings.year }).from(schema.yearClosings).where(eq(schema.yearClosings.year, closedYear));
   if (closed) throw new LedgerError(`Das Jahr ${closedYear} ist abgeschlossen; Buchungen mit Datum darin sind nicht mehr möglich.`);
+  // Gleiche Sperrreihenfolge wie Gesellschafteränderungen: erst Audit, dann die Beteiligung.
+  if (books.rechtsform === "gbr") await tx.execute(sql`select haben_lock_audit_chain()`);
   const partnerLines = await gbrPostingLinesIn(tx, books, posting);
   const [entry] = await tx
     .insert(schema.journalEntries)
@@ -150,7 +152,7 @@ async function openingBalances(start: string): Promise<{ kontenrahmen: Kontenrah
     kontenrahmen: company.kontenrahmen,
     balances:
       company.rechtsform === "gbr"
-        ? new Map(rows.filter((r) => isPrivateAccount(company.kontenrahmen, r.account)).map((r) => [r.account, Number(r.saldo)]))
+        ? new Map(rows.filter((r) => isGbrPrivateAccount(company.kontenrahmen, r.account)).map((r) => [r.account, Number(r.saldo)]))
         : carryForward(
             company.kontenrahmen,
             rows.map((r) => ({ account: r.account, saldo: Number(r.saldo) })),

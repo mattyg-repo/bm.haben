@@ -76,6 +76,7 @@ Den Rundgang in Bildern gibt die [Startseite](index.md), den schnellen
 | | |
 |---|---|
 | [GmbH und UG](gmbh.md) | Ablauf eines Jahres mit doppelter Buchführung: Einrichten, Bilanz und GuV, Jahresabschluss, E-Bilanz, Körperschaft- und Gewerbesteuer, Gewinnausschüttung, Hinterlegung |
+| [GbR mit EÜR](gbr.md) | Laufende Buchhaltung mit Privatkonten je Gesellschafter und DATEV-Übergabepaket mit Originalbelegen; Abschluss, Gewinnverteilung und Feststellung außerhalb von Haben |
 | [Abschluss für GmbH und UG](gmbh-abschluss.md) | Eröffnung, Jahresabschluss mit Vermerken, Hinterlegung beim Unternehmensregister, Körperschaft- und Gewerbesteuer, Gewinnausschüttung, E-Bilanz |
 
 ## Umzug und Import

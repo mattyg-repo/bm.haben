@@ -26,6 +26,8 @@ Eine Zeile mit Links zu **Belege von ELSTER** und **Verlauf** schließt den Kast
 
 Bei einer GmbH oder UG zeigt die Seite die Umsatzsteuererklärung, die [Körperschaftsteuererklärung und die Gewerbesteuererklärung](#körperschaft--und-gewerbesteuererklärung-gmbh-und-ug); Anlage EÜR und Einkommensteuer gibt es für eine Kapitalgesellschaft nicht, und der Server lehnt ihre Übermittlung ab. Bilanz, GuV und E-Bilanz stehen unter [Jahresabschluss](gmbh-abschluss.md#e-bilanz-gmbh-und-ug).
 
+Für eine [GbR mit EÜR](gbr.md) steht hier nur die Umsatzsteuererklärung zur Verfügung. Die laufende EÜR steht unter **Auswertungen**; Anlage EÜR, Gewinnverteilung und Feststellungserklärung werden außerhalb von Haben erstellt. Eine Einkommensteuererklärung der Gesellschafter bietet Haben hier nicht an.
+
 ## Ablauf
 
 1. **Jahr abschließen:** Bankumsätze bis 31.12. zuordnen, Belege buchen, unter [Anlagen](anlagen.md) die AfA des Jahres buchen. Solange AfA oder Privatnutzung fehlen, lässt sich die Anlage EÜR nicht senden.

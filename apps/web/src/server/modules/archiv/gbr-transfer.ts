@@ -33,45 +33,8 @@ export async function gbrTransfer(year: number, now: Date, exporteur: Exporteur,
     warnings.push(
       `${overlap} Journalbuchungen waren bereits in einem erstellten Übergabepaket. Beim Import Doppelbuchungen vermeiden; das Paket enthält sie weiterhin vollständig.`,
     );
-  const paths = new Map<string, string[]>();
-  const files: ArchiveFile[] = [];
-  for (const doc of documents) {
-    const path = `belege/${doc.id}.${EXTENSIONS[doc.mimeType] ?? "bin"}`;
-    paths.set(doc.id, [path]);
-    files.push({ path, content: checkedDocument(doc.sha256), compress: doc.mimeType === "application/xml" });
-  }
-  for (const invoice of invoices) {
-    const invoicePaths: string[] = [];
-    if (invoice.pdf) {
-      const path = `rechnungen/${invoice.id}.pdf`;
-      invoicePaths.push(path);
-      files.push({ path, content: new Uint8Array(invoice.pdf), compress: false });
-    }
-    if (invoice.xml) {
-      const path = `rechnungen/${invoice.id}.xml`;
-      invoicePaths.push(path);
-      files.push({ path, content: encoder.encode(invoice.xml), compress: true });
-    }
-    paths.set(invoice.id, invoicePaths);
-    if (invoicePaths.length === 0) throw new DatevExportError(`Zur Rechnung ${invoice.number ?? invoice.id} fehlt das Original.`);
-  }
-  const index = csv(
-    ["Journal-ID", "Datum", "Quelle", "Vorgangs-ID", "Belegfeld 1", "Originaldateien"],
-    datev.entries.map((entry) => {
-      const ref = refs.get(entry.sourceId);
-      const id = ref?.documentId ?? ref?.invoiceId;
-      const doc = documents.find((d) => d.id === id);
-      const invoice = invoices.find((i) => i.id === id);
-      return [
-        entry.id,
-        entry.date,
-        entry.sourceType,
-        entry.sourceId,
-        voucherField(doc?.invoiceNumber || invoice?.number || doc?.filename || ""),
-        id ? (paths.get(id) ?? []).join(" | ") : "",
-      ];
-    }),
-  );
+  const { files, paths } = originalFiles(documents, invoices);
+  const index = voucherIndex(datev.entries, refs, documents, invoices, paths);
   const manifest = {
     version: 1,
     transferId: transfer.id,
@@ -121,4 +84,59 @@ async function logTransfer(actor: string, start: string, end: string, entryIds: 
     const [transfer] = await tx.insert(schema.gbrTransfers).values({ fingerprint, dateFrom: start, dateTo: end, entryIds }).returning();
     return { transfer: transfer!, overlap };
   });
+}
+
+type Document = typeof schema.documents.$inferSelect;
+type Invoice = typeof schema.invoices.$inferSelect;
+
+function originalFiles(documents: Document[], invoices: Invoice[]) {
+  const paths = new Map<string, string[]>();
+  const files: ArchiveFile[] = [];
+  for (const doc of documents) {
+    const path = `belege/${doc.id}.${EXTENSIONS[doc.mimeType] ?? "bin"}`;
+    paths.set(doc.id, [path]);
+    files.push({ path, content: checkedDocument(doc.sha256), compress: doc.mimeType === "application/xml" });
+  }
+  for (const invoice of invoices) {
+    const invoicePaths: string[] = [];
+    if (invoice.pdf) {
+      const path = `rechnungen/${invoice.id}.pdf`;
+      invoicePaths.push(path);
+      files.push({ path, content: new Uint8Array(invoice.pdf), compress: false });
+    }
+    if (invoice.xml) {
+      const path = `rechnungen/${invoice.id}.xml`;
+      invoicePaths.push(path);
+      files.push({ path, content: encoder.encode(invoice.xml), compress: true });
+    }
+    paths.set(invoice.id, invoicePaths);
+    if (invoicePaths.length === 0) throw new DatevExportError(`Zur Rechnung ${invoice.number ?? invoice.id} fehlt das Original.`);
+  }
+  return { files, paths };
+}
+
+function voucherIndex(
+  entries: Awaited<ReturnType<typeof datevExport>>["entries"],
+  refs: Awaited<ReturnType<typeof datevQuellen>>,
+  documents: Document[],
+  invoices: Invoice[],
+  paths: Map<string, string[]>,
+) {
+  return csv(
+    ["Journal-ID", "Datum", "Quelle", "Vorgangs-ID", "Belegfeld 1", "Originaldateien"],
+    entries.map((entry) => {
+      const ref = refs.get(entry.sourceId);
+      const id = ref?.documentId ?? ref?.invoiceId;
+      const doc = documents.find((d) => d.id === id);
+      const invoice = invoices.find((i) => i.id === id);
+      return [
+        entry.id,
+        entry.date,
+        entry.sourceType,
+        entry.sourceId,
+        voucherField(doc?.invoiceNumber || invoice?.number || doc?.filename || ""),
+        id ? (paths.get(id) ?? []).join(" | ") : "",
+      ];
+    }),
+  );
 }

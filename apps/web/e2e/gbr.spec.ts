@@ -14,9 +14,12 @@ test("GbR: Gesellschafter, Privatbewegungen und protokolliertes Übergabepaket",
   });
   expect(setup.ok(), `Einrichtung: HTTP ${setup.status()}`).toBe(true);
   await gehe(page, "/einstellungen");
-  // Der Service Worker wird im Root-Effect registriert: erst danach auf dem kalt gestarteten Dev-Server Formulare bedienen.
-  await page.waitForFunction(async () => Boolean(await navigator.serviceWorker.getRegistration()));
   const firma = page.getByRole("form", { name: "Firmendaten" });
+  // Das Formular erst nach der Hydrierung befüllen; die Rechtsform ändert dann auch den sichtbaren Hinweis.
+  await expect(async () => {
+    await firma.getByLabel("Rechtsform", { exact: true }).selectOption("gbr");
+    await expect(firma).toContainText("EÜR-GbR mit Gesellschafterkonten");
+  }).toPass({ timeout: 30000 });
   await firma.getByLabel("Name", { exact: true }).fill("Beispiel GbR");
   await firma.getByLabel("E-Mail", { exact: true }).fill("rechnung@example.test");
   await firma.getByLabel("Straße und Hausnummer").fill("Musterstraße 12");
@@ -30,13 +33,14 @@ test("GbR: Gesellschafter, Privatbewegungen und protokolliertes Übergabepaket",
   await expect(page.getByText("Firmendaten gespeichert.")).toBeVisible();
   await gehe(page, "/einstellungen?bereich=konten");
   const year = new Date().getFullYear();
+  const overview = page.getByRole("region", { name: "GbR-Gesellschafterkonten" });
   const form = page.getByRole("form", { name: "Gesellschafter anlegen", exact: true });
   for (const name of ["Erika Beispiel", "Max Muster"]) {
     await form.getByLabel("Name des Gesellschafters").fill(name);
     await form.getByLabel("Eintritt", { exact: true }).fill(`${year}-01-01`);
     await form.getByRole("button", { name: "Gesellschafter anlegen" }).click();
     await expect(form.getByLabel("Name des Gesellschafters")).toHaveValue("");
-    await expect(page.getByText(name, { exact: true })).toBeVisible();
+    await expect(overview.getByText(name, { exact: true })).toBeVisible();
   }
   await expect(page.getByText("Entnahmen 1801 · Einlagen 1891")).toBeVisible();
   await expect(page.getByText("Entnahmen 1802 · Einlagen 1892")).toBeVisible();
@@ -58,7 +62,6 @@ test("GbR: Gesellschafter, Privatbewegungen und protokolliertes Übergabepaket",
   await expect(page.getByRole("status")).toContainText("gebucht");
 
   await gehe(page, "/einstellungen?bereich=konten");
-  const overview = page.getByRole("region", { name: "GbR-Gesellschafterkonten" });
   await expect(overview).toContainText("150,00");
   await expect(overview).toContainText("100,00");
   if (process.env.GBR_SCREENSHOTS_DIR) {

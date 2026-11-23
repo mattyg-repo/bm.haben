@@ -1,4 +1,4 @@
-import { currentYear, formatEuro, type PauschaleArt, isKapitalgesellschaft } from "@haben/core";
+import { currentYear, formatEuro, type PauschaleArt } from "@haben/core";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod/mini";
@@ -26,7 +26,7 @@ const ART_KURZ: Record<PauschaleArt, string> = {
 };
 function PauschalenPage() {
   const { rechtsform } = Route.useRouteContext();
-  if (isKapitalgesellschaft(rechtsform)) return <OnlyEinzelunternehmen />;
+  if (rechtsform !== "einzelunternehmen") return <OnlyEinzelunternehmen gbr={rechtsform === "gbr"} />;
   return <PauschalenList />;
 }
 

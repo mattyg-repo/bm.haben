@@ -1,4 +1,4 @@
-import { currentYear, elektroAvailable, isKapitalgesellschaft } from "@haben/core";
+import { currentYear, elektroAvailable } from "@haben/core";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { AssetForm } from "../../../components/AssetForm.tsx";
@@ -49,7 +49,7 @@ function NewAssetPage() {
               note: "",
             }}
             locked={false}
-            privateUseAvailable={!isKapitalgesellschaft(rechtsform)}
+            privateUseAvailable={rechtsform === "einzelunternehmen"}
             elektroOffered={elektroAvailable(rechtsform)}
             privateUseLocked={false}
             lifeEditable

@@ -1,4 +1,4 @@
-import { ACCOUNTS, ACCOUNT_NAMES, GBR_PARTNER_LIMIT, gbrAccount, isPrivateAccount, type Kontenrahmen } from "@haben/core";
+import { ACCOUNTS, ACCOUNT_NAMES, GBR_PARTNER_LIMIT, gbrAccount, isGbrPrivateAccount, type Kontenrahmen } from "@haben/core";
 import { and, asc, eq, lt, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db, schema, type Db, type Tx } from "../../db/index.ts";
@@ -77,10 +77,11 @@ export async function gbrSourceOverview(kind: GbrSourceKind, sourceId: string) {
   let inheritedName: string | null = null;
   if (kind === "bank" && !partnerId) {
     const [transaction] = await db
-      .select({ accountId: schema.bankTransactions.bankAccountId })
+      .select({ accountId: schema.bankTransactions.bankAccountId, purpose: schema.bankAccounts.purpose })
       .from(schema.bankTransactions)
+      .innerJoin(schema.bankAccounts, eq(schema.bankTransactions.bankAccountId, schema.bankAccounts.id))
       .where(eq(schema.bankTransactions.id, sourceId));
-    const inheritedId = transaction ? await gbrSourcePartner("bankkonto", transaction.accountId) : null;
+    const inheritedId = transaction?.purpose === "privat" ? await gbrSourcePartner("bankkonto", transaction.accountId) : null;
     inheritedName = partners.find((p) => p.id === inheritedId)?.name ?? null;
   }
   return { partnerId, partners, locked, inheritedName };
@@ -99,14 +100,18 @@ export async function refreshGbrAccountNames(): Promise<void> {
     for (const p of await listGbrPartners())
       for (const kr of ["SKR03", "SKR04"] as const) {
         const start = kr === "SKR03" ? 1800 : 2100;
-        for (let base = start; base < start + 100; base += 10) {
+        const bases = Array.from({ length: 10 }, (_, i) => start + i * 10);
+        if (kr === "SKR04") bases.push(Number(ACCOUNTS[kr].spenden));
+        for (const base of bases) {
           const label =
             ACCOUNT_NAMES[kr][String(base)] ??
             (String(base) === ACCOUNTS[kr].privateinlagen
               ? "Privateinlagen"
               : String(base) === ACCOUNTS[kr].privatentnahmen
                 ? "Privatentnahmen"
-                : "Privatkonto");
+                : String(base) === ACCOUNTS[kr].spenden
+                  ? "Zuwendungen, Spenden"
+                  : "Privatkonto");
           next[kr][String(base + p.number)] = `${label} · ${p.name}`;
         }
       }
@@ -167,7 +172,7 @@ export async function gbrPartnerOverview(year: number) {
     kontenrahmen: company.kontenrahmen,
     year,
     partners: partners.map((p) => {
-      const movements = rows.filter((r) => isPrivateAccount(company.kontenrahmen, r.account) && Number(r.account) % 10 === p.number);
+      const movements = rows.filter((r) => isGbrPrivateAccount(company.kontenrahmen, r.account) && Number(r.account) % 10 === p.number);
       const sum = (key: "opening" | "debit" | "credit") => movements.reduce((total, r) => total + Number(r[key]), 0);
       return {
         ...p,

@@ -13,7 +13,7 @@ Haben führt die laufende Buchhaltung einer GbR mit Einnahmen-Überschuss-Rechnu
 
 1. Vor der ersten Buchung unter **Einstellungen › Firma** die Rechtsform **GbR (EÜR)** und den Kontenrahmen der bisherigen Buchhaltung wählen. Eine schon bebuchte Instanz lässt sich nicht nachträglich vom Einzelunternehmen auf GbR umstellen. Auch der Kontenrahmen ist bei der GbR ab der ersten Buchung fest.
 2. Unter **Einstellungen › Eigene Konten** die Gesellschafter mit Name und Eintritt anlegen. Haben vergibt feste Kennungen von 1 bis 9. Jede Kennung bleibt bei derselben Person, auch nach ihrem Austritt; die erste Ausbaustufe unterstützt insgesamt neun Kennungen.
-3. Die angezeigten Konten mit MonKey Office abstimmen: etwa SKR03 1801/1891 und 1802/1892 für Entnahmen/Einlagen, in SKR04 2101/2181 und 2102/2182. Auch andere Privatkontenarten behalten ihre Bedeutung und bekommen dieselbe letzte Ziffer. Grundlage sind die Privatkonten im [DATEV SKR03](https://www.datev.de/content/dam/markenassets/themen-und-produktgruppen/zielgruppen/mandant/unternehmer/branche/bau/11174%20SKR03%20BilrUg.pdf) beziehungsweise [SKR04](https://www.datev.de/content/dam/markenassets/themen-und-produktgruppen/zielgruppen/mandant/unternehmer/branche/bau/11175%20SKR04%20BilrUg.pdf) 2026.
+3. Die angezeigten Konten mit MonKey Office abstimmen und dort als eigene Unterkonten einrichten: etwa SKR03 1801/1891 und 1802/1892 für Entnahmen/Einlagen, in SKR04 2101/2181 und 2102/2182. Auch andere Privatkontenarten bekommen dieselbe letzte Ziffer. Grundlage sind die Privatkonten im [DATEV SKR03](https://www.datev.de/content/dam/markenassets/themen-und-produktgruppen/zielgruppen/mandant/unternehmer/branche/bau/11174%20SKR03%20BilrUg.pdf) beziehungsweise [SKR04](https://www.datev.de/content/dam/markenassets/themen-und-produktgruppen/zielgruppen/mandant/unternehmer/branche/bau/11175%20SKR04%20BilrUg.pdf) 2026. Die Endziffer als Gesellschafterkennung ist Habens eigene Belegung; die DATEV-Standardbezeichnungen der Unterkonten können davon abweichen.
 
 Name, Eintritt und Austritt lassen sich bearbeiten. Kontenkennungen lassen sich weder ändern noch löschen. Eintritt oder Austritt dürfen bestehende Privatbuchungen nicht ausschließen; neue Buchungen außerhalb der Beteiligungszeit werden abgelehnt. Stornos bleiben auch nach dem Austritt möglich.
 
@@ -25,7 +25,9 @@ Name, Eintritt und Austritt lassen sich bearbeiten. Kontenkennungen lassen sich 
 
 Ab der Buchung bleibt die Zuordnung fest. Korrekturen laufen über Storno und Neuerfassung beziehungsweise eine neue Bankzuordnung. Nach dem ersten gebuchten Teil lässt sich die Gesellschafterwahl eines Bankumsatzes nicht mehr ändern; einzelne Teile können weiterhin eine ausdrückliche eigene Wahl tragen.
 
-Ein privat bezahlter Beleg der GbR ist nicht automatisch eine Sonderbetriebsausgabe. Sonderbetriebseinnahmen und -ausgaben, Sondervergütungen und persönliche Steuern der Gesellschafter müssen außerhalb dieser laufenden GbR-Buchhaltung beurteilt und erfasst werden; siehe die [ELSTER-Hilfe zur Feststellung](https://www.elster.de/eportal/helpGlobal?themaGlobal=help_fein_2025).
+Ein privat bezahlter Beleg der GbR ist nicht automatisch eine Sonderbetriebsausgabe. Pauschalen der Gesellschafter, Sonderbetriebseinnahmen und -ausgaben sowie Sondervergütungen müssen außerhalb dieser laufenden GbR-Buchhaltung beurteilt und erfasst werden; siehe die [ELSTER-Hilfe zur Feststellung](https://www.elster.de/eportal/helpGlobal?themaGlobal=help_fein_2025). Die persönlichen Steuererklärungen der Gesellschafter bleiben ebenfalls außerhalb von Haben. Zahlungen ihrer persönlichen Steuern vom Geschäftskonto sind dagegen Entnahmen des gewählten Gesellschafters, siehe [Steuerzahlungen](bank-steuern-darlehen.md#steuerzahlungen).
+
+Die automatische private Kfz-Nutzung wird für eine GbR in dieser Stufe nicht angeboten. Anlagen und AfA ohne Privatnutzung sind nutzbar; private Kfz-Nutzung erfasst du außerhalb von Haben.
 
 ## Konten und Anfangsbestände
 
@@ -37,7 +39,7 @@ Anfangsbestände aus der bisherigen Buchhaltung erfasst du unter **Buchungen ›
 
 1. Unter **Einstellungen › Export › DATEV-Export** Berater- und Mandantennummer speichern und Jahr, Quartal oder Monat wählen.
 2. **GbR-Übergabepaket mit Originalbelegen** herunterladen. Das ZIP enthält den DATEV-Stapel, die zugehörigen Originalbelege und Rechnungen, `belegzuordnung.csv`, `uebergabe.json` und Prüfsummen. Auch ein Vorjahresbeleg gehört dazu, wenn seine Zahlung im gewählten Zeitraum liegt.
-3. Den Import zuerst in einer Testfirma prüfen: Konten, Steuerschlüssel, Festschreibung und Kontensalden. Haben exportiert bereits gebuchte Journaleinträge mit ihrem Festschreibungskennzeichen. Eine automatische Verknüpfung der Originaldateien in MonKey Office ist nicht zugesichert; die Zuordnungsliste nennt die Dateien je Journalbuchung.
+3. Den DATEV-Stapel aus dem entpackten ZIP über **Import & Export › Import DATEV** zuerst in eine Testfirma importieren und Konten, Steuerschlüssel, Festschreibung und Kontensalden prüfen (siehe [MonKey-Office-Hilfe zum DATEV-Import](https://prosaldo.zendesk.com/hc/de/articles/115001603223-Daten-von-Lexware-zu-MonKey-Office-%C3%BCbertragen)). Haben exportiert bereits gebuchte Journaleinträge mit ihrem Festschreibungskennzeichen. Eine automatische Verknüpfung der Originaldateien in MonKey Office ist nicht zugesichert; die Zuordnungsliste nennt die Dateien je Journalbuchung.
 
 Haben protokolliert die **Erstellung** des Pakets, nicht den erfolgreichen Import im Fremdprogramm. Bei erneut enthaltenen Journal-IDs erscheint eine Warnung. Ein Paket enthält seinen Zeitraum trotzdem vollständig: Überlappende Pakete dürfen nicht vollständig nebeneinander importiert werden. Die Buchungen eines früheren Pakets werden nicht still ausgelassen.
 

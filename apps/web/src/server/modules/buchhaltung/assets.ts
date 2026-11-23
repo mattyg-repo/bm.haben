@@ -295,6 +295,7 @@ function samePrivateUse(a: CarPrivateUse | null, b: CarPrivateUse | null): boole
 function privateUseValue(kind: Asset["kind"], value: CarPrivateUse | null, company: Pick<Company, "kleinunternehmer" | "rechtsform">): CarPrivateUse | null {
   if (!value) return null;
   if (isKapitalgesellschaft(company.rechtsform)) throw new AssetUserError("Privatnutzung als Entnahme gibt es nur im Einzelunternehmen.");
+  if (company.rechtsform === "gbr") throw new AssetUserError("Kfz-Privatnutzung der GbR wird in dieser Ausbaustufe außerhalb von Haben erfasst.");
   if (kind !== "kfz") throw new AssetUserError("Privatnutzung nach der Listenpreismethode gibt es nur für Fahrzeuge.");
   return { ...value, vat: value.vat && !company.kleinunternehmer };
 }

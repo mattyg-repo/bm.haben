@@ -41,7 +41,7 @@ describe.skipIf(!testDatabaseUrl)("EÜR-GbR mit Gesellschafterkonten (Postgres)"
     return { a, b };
   }
 
-  async function beleg(partnerId: string, payment: "privat" | "bank" = "privat", gross = 11900) {
+  async function beleg(partnerId: string, payment: "privat" | "bank" = "privat", gross = 11900, documentDate = "2026-10-02") {
     const { id } = await documents.uploadDocument(actor, {
       bytes: new Uint8Array([255, 216, 255, 224, ...crypto.getRandomValues(new Uint8Array(12))]),
       filename: "rechnung.jpg",
@@ -50,7 +50,7 @@ describe.skipIf(!testDatabaseUrl)("EÜR-GbR mit Gesellschafterkonten (Postgres)"
       supplierName: "Bürobedarf Beispiel",
       supplierUstId: "",
       invoiceNumber: `R-${id.slice(0, 8)}`,
-      documentDate: "2026-10-02",
+      documentDate,
       dueDate: null,
       category: "software",
       payment,
@@ -163,6 +163,54 @@ describe.skipIf(!testDatabaseUrl)("EÜR-GbR mit Gesellschafterkonten (Postgres)"
     expect(transfers).toHaveLength(2);
     expect(transfers[0]!.fingerprint).toBe(transfers[1]!.fingerprint);
     await expect(sql`delete from gbr_transfers`).rejects.toThrow();
+  });
+
+  it("nutzt die Person des Privatkontos als Vorgabe, am Umsatz aber eine ausdrückliche Wahl", async () => {
+    const { a, b } = await addPartners();
+    const tx = await transaction(-11900, "privat");
+    const [account] = await sql`select bank_account_id as id from bank_transactions where id = ${tx}`;
+    await partners.saveGbrSourcePartner(actor, "bankkonto", account!.id, a.id);
+    expect((await partners.gbrSourceOverview("bank", tx)).inheritedName).toBe(a.name);
+    const id = await beleg(a.id, "bank");
+    await bank.allocate(actor, { kind: "document", transactionId: tx, documentId: id, amount: -11900 });
+    expect((await partners.gbrPartnerOverview(2026)).partners[0]!.balance).toBe(11900);
+    await expect(partners.saveGbrSourcePartner(actor, "bankkonto", account!.id, b.id)).rejects.toThrow();
+
+    const overridden = await transaction(-11900, "privat");
+    const [otherAccount] = await sql`select bank_account_id as id from bank_transactions where id = ${overridden}`;
+    await partners.saveGbrSourcePartner(actor, "bankkonto", otherAccount!.id, a.id);
+    await partners.saveGbrSourcePartner(actor, "bank", overridden, b.id);
+    const otherDocument = await beleg(b.id, "bank");
+    await bank.allocate(actor, { kind: "document", transactionId: overridden, documentId: otherDocument, amount: -11900 });
+    expect((await partners.gbrPartnerOverview(2026)).partners.map((p) => p.balance)).toEqual([11900, 11900]);
+  });
+
+  it("verwendet nach Umstellung auf Geschäftskonto keine unsichtbare Privatkonto-Vorgabe", async () => {
+    const { a } = await addPartners();
+    const tx = await transaction(-10000, "privat");
+    const [account] = await sql`select bank_account_id as id from bank_transactions where id = ${tx}`;
+    await partners.saveGbrSourcePartner(actor, "bankkonto", account!.id, a.id);
+    const accounts = await import("../bank/accounts.ts");
+    await accounts.updateAccount(actor, { id: account!.id, name: "Jetzt Geschäftskonto", purpose: "geschaeft" });
+    expect((await partners.gbrSourceOverview("bank", tx)).inheritedName).toBeNull();
+    await expect(bank.allocate(actor, { kind: "privat", transactionId: tx, amount: -10000 })).rejects.toThrow(/Gesellschafter/);
+  });
+
+  it("legt den Originalbeleg aus dem Vorjahr zur exportierten Zahlung des laufenden Jahres", async () => {
+    const { a } = await addPartners();
+    const id = await beleg(a.id, "bank", 11900, "2025-12-20");
+    const tx = await transaction(-11900);
+    await bank.allocate(actor, { kind: "document", transactionId: tx, documentId: id, amount: -11900 });
+    const { gbrTransfer } = await import("../archiv/gbr-transfer.ts");
+    const { unzipSync } = await import("fflate");
+    const result = await gbrTransfer(2026, new Date("2026-11-20T12:00:00Z"), { id: actor, role: "inhaber" });
+    const chunks: Uint8Array[] = [];
+    for await (const chunk of result.chunks) chunks.push(chunk);
+    const files = unzipSync(new Uint8Array(Buffer.concat(chunks)));
+    expect(files[`belege/${id}.jpg`]).toBeDefined();
+    expect(new TextDecoder().decode(files["belegzuordnung.csv"]!)).toContain(id);
+    const manifest = JSON.parse(new TextDecoder().decode(files["uebergabe.json"]!));
+    expect(manifest.entryIds).toHaveLength(1);
   });
 
   it("übernimmt Anfangsbestände und zeigt den Vortrag im nächsten Kontenblatt", async () => {

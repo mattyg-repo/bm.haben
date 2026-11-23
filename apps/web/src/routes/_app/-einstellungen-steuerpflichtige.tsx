@@ -1,4 +1,3 @@
-import { isKapitalgesellschaft } from "@haben/core";
 import { useRouter, getRouteApi } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
@@ -74,7 +73,7 @@ export function PersonFields({ prefix, person }: { prefix: PersonKey; person: Ta
 export function TaxpayerForm() {
   const { company } = route.useLoaderData();
   const taxpayer = company.taxpayer;
-  const istPerson = !isKapitalgesellschaft(company.rechtsform);
+  const istPerson = company.rechtsform === "einzelunternehmen";
   const router = useRouter();
   const save = useServerFn(saveTaxpayerData);
   const [veranlagung, setVeranlagung] = useState(taxpayer.veranlagung ?? "einzel");
